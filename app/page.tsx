@@ -1,75 +1,24 @@
 "use client";
 
-import type { Feature, FeatureCollection } from "geojson";
 import { useEffect, useState } from "react";
-import { feature } from "topojson-client";
 import { Legend } from "./components/Legend";
 import { MapView } from "./components/MapView";
 import { NoteSidebar } from "./components/NoteSidebar";
+import { ShareDialog } from "@/app/components/ShareDialog";
 import { useMapData } from "./hooks/useMapData";
+import { CountryFeature, loadCountries } from "./utils/geo";
 
 export default function Home() {
-  const GEO_URL =
-    "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-  interface CountryProperties {
-    id: string;
-    name: string;
-  }
-  type CountryFeature = Feature<GeoJSON.Geometry, CountryProperties>;
-
-  // Patch: Extend CountryEntry type to include optional name
-  // (This should be moved to types/index.ts for best practice)
-  type CountryEntryPatched = ReturnType<typeof getCountryData> & {
-    name?: string;
-  };
   const [countries, setCountries] = useState<CountryFeature[]>([]);
   const [isMapLoading, setIsMapLoading] = useState(true);
 
   useEffect(() => {
-    const loadGeoData = async () => {
-      try {
-        const response = await fetch(GEO_URL);
-        const topology = await response.json();
-        let countriesObject = topology.objects.countries;
-        if (!countriesObject) {
-          countriesObject =
-            topology.objects.countries110 ||
-            topology.objects.countries_110m ||
-            null;
-        }
-        if (!countriesObject) {
-          setIsMapLoading(false);
-          return;
-        }
-        const geoJsonFeatures = feature(topology, countriesObject);
-        if (!geoJsonFeatures || !("features" in geoJsonFeatures)) {
-          setIsMapLoading(false);
-          return;
-        }
-        const features = (
-          geoJsonFeatures as unknown as FeatureCollection<
-            GeoJSON.Geometry,
-            CountryProperties
-          >
-        ).features;
-        const validCountries = features.filter((country: CountryFeature) => {
-          return (
-            country.id &&
-            country.id !== "-99" &&
-            country.properties &&
-            country.properties.name &&
-            typeof country.properties.name === "string"
-          );
-        });
-        setCountries(validCountries);
-        setIsMapLoading(false);
-      } catch {
-        setIsMapLoading(false);
-      }
-    };
-    loadGeoData();
+    setCountries(loadCountries());
+    setIsMapLoading(false);
   }, []);
+
   const {
+    mapData,
     selectedCountry,
     setSelectedCountry,
     updateCountry,
@@ -81,18 +30,16 @@ export default function Home() {
     isLoading,
   } = useMapData();
 
-  // Add hoveredCountry state and handler
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+
   const handleCountryHover = (countryCode: string | null) => {
     setHoveredCountry(countryCode);
   };
 
   const handleCountryClick = (countryCode: string) => {
     if (selectedCountry === countryCode) {
-      // If already selected, cycle the status
       cycleStatus(countryCode);
     } else {
-      // Select the country and open sidebar
       setSelectedCountry(countryCode);
     }
   };
@@ -113,13 +60,17 @@ export default function Home() {
     );
   }
 
+  const selectedCountryName = selectedCountry
+    ? countries.find(
+        (c: CountryFeature) => String(c.id) === selectedCountry
+      )?.properties.name || selectedCountry.toUpperCase()
+    : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
-        {/* Legend */}
         <div className="lg:col-span-1">
           <Legend counts={getTotalCountsByStatus()} />
-          {/* Instructions */}
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
               How to Use
@@ -130,10 +81,13 @@ export default function Home() {
               <li>• Selected countries open the sidebar</li>
               <li>• Add notes and visit dates</li>
               <li>• Your map is automatically saved in your browser</li>
+              <li>• Use the Share button to send a link to a friend</li>
             </ul>
           </div>
+          <div className="mt-6">
+            <ShareDialog mapData={mapData} />
+          </div>
         </div>
-        {/* Map */}
         <div className="lg:col-span-3 flex justify-center items-center">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 w-full max-w-4xl mx-auto overflow-hidden flex items-center justify-center">
             <div className="w-full aspect-w-16 aspect-h-9">
@@ -152,20 +106,10 @@ export default function Home() {
           </div>
         </div>
       </div>
-      {/* Sidebar */}
       <NoteSidebar
         countryCode={selectedCountry}
-        countryData={
-          selectedCountry
-            ? ({
-                ...getCountryData(selectedCountry),
-                name:
-                  countries.find(
-                    (c: CountryFeature) => String(c.id) === selectedCountry
-                  )?.properties.name || selectedCountry.toUpperCase(),
-              } as CountryEntryPatched)
-            : null
-        }
+        countryName={selectedCountryName}
+        countryData={selectedCountry ? getCountryData(selectedCountry) : null}
         onUpdateCountry={updateCountry}
         onRemoveCountry={removeCountry}
         onClose={handleCloseSidebar}

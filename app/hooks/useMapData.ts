@@ -4,28 +4,40 @@ import { useEffect, useState } from "react";
 import { CountryEntry, MapData, TravelStatus } from "../types";
 import {
   cycleCountryStatus,
-  loadMapData,
+  localStorageStore,
+  MapDataStore,
   removeCountryEntry,
-  saveMapData,
   updateCountryEntry,
 } from "../utils/storage";
 
-export const useMapData = () => {
+export interface UseMapDataOptions {
+  store?: MapDataStore;
+}
+
+export const useMapData = ({
+  store = localStorageStore,
+}: UseMapDataOptions = {}) => {
   const [mapData, setMapData] = useState<MapData>({});
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const data = loadMapData();
-    setMapData(data);
-    setIsLoading(false);
-  }, []);
+    let cancelled = false;
+    Promise.resolve(store.load()).then((data) => {
+      if (cancelled) return;
+      setMapData(data);
+      setIsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [store]);
 
   useEffect(() => {
     if (!isLoading) {
-      saveMapData(mapData);
+      void store.save(mapData);
     }
-  }, [mapData, isLoading]);
+  }, [mapData, isLoading, store]);
 
   const updateCountry = (
     countryCode: string,
@@ -43,6 +55,10 @@ export const useMapData = () => {
     if (selectedCountry === countryCode) {
       setSelectedCountry(null);
     }
+  };
+
+  const replaceMapData = (next: MapData) => {
+    setMapData(next);
   };
 
   const getCountryData = (countryCode: string): CountryEntry | null => {
@@ -67,6 +83,7 @@ export const useMapData = () => {
     updateCountry,
     cycleStatus,
     removeCountry,
+    replaceMapData,
     getCountryData,
     getCountryStatus,
     getTotalCountsByStatus,

@@ -11,7 +11,8 @@ import { CountryEntry, TravelStatus } from "../types";
 
 interface NoteSidebarProps {
   countryCode: string | null;
-  countryData: (CountryEntry & { name?: string }) | null;
+  countryName: string | null;
+  countryData: CountryEntry | null;
   onUpdateCountry: (
     countryCode: string,
     updates: Partial<CountryEntry>
@@ -23,6 +24,7 @@ interface NoteSidebarProps {
 
 export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   countryCode,
+  countryName,
   countryData,
   onUpdateCountry,
   onRemoveCountry,
@@ -57,7 +59,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
 
     onUpdateCountry(countryCode, updates);
     toast.success(
-      `Changes saved for ${countryData?.name || countryCode.toUpperCase()}`
+      `Changes saved for ${countryName || countryCode.toUpperCase()}`
     );
   };
 
@@ -65,7 +67,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
     if (!countryCode) return;
     onRemoveCountry(countryCode);
     toast.success(
-      `${countryData?.name || countryCode.toUpperCase()} removed from map`
+      `${countryName || countryCode.toUpperCase()} removed from map`
     );
   };
 
@@ -75,7 +77,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
       onUpdateCountry(countryCode, { status: newStatus });
       toast.success(
         `Status changed to "${STATUS_LABELS[newStatus]}" for ${
-          countryData?.name || countryCode.toUpperCase()
+          countryName || countryCode.toUpperCase()
         }`
       );
     }
@@ -85,7 +87,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
     return null;
   }
 
-  const countryName = countryData?.name || countryCode.toUpperCase();
+  const displayName = countryName || countryCode.toUpperCase();
 
   return (
     <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-xl border-l border-gray-200 dark:border-gray-700 z-50 overflow-y-auto">
@@ -94,9 +96,9 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
         <div className="flex items-center justify-between mb-6">
           <h2
             className="text-xl font-bold text-gray-900 dark:text-white truncate"
-            title={countryName}
+            title={displayName}
           >
-            {countryName}
+            {displayName}
           </h2>
           <button
             onClick={onClose}
@@ -174,11 +176,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                     visitedAt: e.target.value || undefined,
                   });
                   if (e.target.value) {
-                    toast.success(
-                      `Visit date updated for ${
-                        countryData?.name || countryCode.toUpperCase()
-                      }`
-                    );
+                    toast.success(`Visit date updated for ${displayName}`);
                   }
                 }
               }}

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /m/
+Disallow: /compare/
+
+Sitemap: https://personal-world-map.vercel.app/sitemap.xml

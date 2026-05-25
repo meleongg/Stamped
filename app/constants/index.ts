@@ -1,7 +1,10 @@
-// Travel status related constants
+// Travel status related constants.
+// Yellow shifted from yellow-400 to yellow-500 (#eab308) for better contrast
+// on both light and dark backgrounds — yellow-400 washes out on white and
+// glares on dark.
 export const STATUS_COLORS = {
   visited: "#22c55e", // green-500
-  planning: "#fde047", // yellow-400
+  planning: "#eab308", // yellow-500
   want_to_visit: "#3b82f6", // blue-500
   avoid: "#ef4444", // red-500
 } as const;
@@ -20,22 +23,26 @@ export const STATUS_CYCLE: TravelStatus[] = [
   "avoid",
 ];
 
-// MapView-specific colors
+// MapView-specific colors.
+// Dark-mode unvisited fill is now LIGHTER than the ocean background so
+// landmasses pop out, instead of disappearing into the dark map container.
+// hoverStrokeDark moved to blue-300 so it doesn't collide with the
+// want_to_visit fill (both were blue-500 previously, making hover invisible).
 export const MAPVIEW_COLORS = {
   unvisitedFill: "#e0e7ff", // Light blue for unvisited countries
-  unvisitedFillDark: "#1e293b", // Dark slate for unvisited countries in dark mode
+  unvisitedFillDark: "#475569", // slate-600 — readable on slate-900 ocean
   hoverFill: "#cbd5e1", // Subtle gray-blue for hover
-  hoverFillDark: "#475569", // Darker hover for dark mode
+  hoverFillDark: "#64748b", // slate-500 — one step lighter than fill
   visitedHover: "#16a34a", // green-600
-  planningHover: "#d97706", // amber-600
+  planningHover: "#ca8a04", // yellow-600 (same hue as new base)
   wantToVisitHover: "#2563eb", // blue-600
   avoidHover: "#b91c1c", // red-700
   selectedStroke: "#1e293b", // Even darker for selected country
   selectedStrokeDark: "#f1f5f9", // Light stroke for dark mode
   borderStroke: "#334155", // Medium-dark for borders
-  borderStrokeDark: "#64748b", // Lighter border for dark mode
+  borderStrokeDark: "#94a3b8", // slate-400 — more visible between countries
   hoverStroke: "#1e40af", // Blue for hover
-  hoverStrokeDark: "#3b82f6", // Lighter blue for dark mode hover
+  hoverStrokeDark: "#93c5fd", // blue-300 — readable against all status fills
 } as const;
 
 // Map dimensions

@@ -4,14 +4,13 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import "d3-transition";
 import { zoom, ZoomBehavior, zoomIdentity } from "d3-zoom";
-import type { Feature } from "geojson";
 import { useEffect, useRef } from "react";
 import { MAP_DIMENSIONS, MAPVIEW_COLORS, STATUS_COLORS } from "../constants";
 import { useTheme } from "../contexts/ThemeContext";
 import { TravelStatus } from "../types";
+import { CountryFeature } from "../utils/geo";
 import { ExportButton } from "./ExportButton";
 
-// File-specific constants
 const STATUS_HOVER_COLORS: Record<TravelStatus, string> = {
   visited: MAPVIEW_COLORS.visitedHover,
   planning: MAPVIEW_COLORS.planningHover,
@@ -21,29 +20,31 @@ const STATUS_HOVER_COLORS: Record<TravelStatus, string> = {
 
 interface MapViewProps {
   getCountryStatus: (countryCode: string) => TravelStatus | null;
-  onCountryClick: (countryCode: string) => void;
-  selectedCountry: string | null;
+  getCountryFill?: (
+    countryCode: string,
+    fallback: string,
+  ) => string | undefined;
+  onCountryClick?: (countryCode: string) => void;
+  selectedCountry?: string | null;
   hoveredCountry?: string | null;
   onCountryHover?: (countryCode: string | null) => void;
   countries: CountryFeature[];
   isLoading: boolean;
+  readonly?: boolean;
+  showExport?: boolean;
 }
-
-interface CountryProperties {
-  id: string;
-  name: string;
-}
-
-type CountryFeature = Feature<GeoJSON.Geometry, CountryProperties>;
 
 export const MapView: React.FC<MapViewProps> = ({
   getCountryStatus,
+  getCountryFill,
   onCountryClick,
   selectedCountry,
   hoveredCountry,
   onCountryHover,
   countries,
   isLoading,
+  readonly = false,
+  showExport = true,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -55,7 +56,6 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const pathGenerator = geoPath().projection(projection);
 
-  // Set up zoom behavior
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
 
@@ -66,9 +66,8 @@ export const MapView: React.FC<MapViewProps> = ({
       SVGSVGElement,
       unknown
     >()
-      .scaleExtent([0.5, 8]) // Allow zoom from 50% to 800%
+      .scaleExtent([0.5, 8])
       .filter((event) => {
-        // Allow zoom and pan, but prevent interference with country clicks
         return !event.ctrlKey && !event.button;
       })
       .on("zoom", (event) => {
@@ -77,17 +76,15 @@ export const MapView: React.FC<MapViewProps> = ({
 
     svg.call(zoomBehavior);
 
-    // Store zoom behavior for reset function
     const svgNode = svg.node() as SVGSVGElement & {
       __zoomBehavior?: ZoomBehavior<SVGSVGElement, unknown>;
     };
     svgNode.__zoomBehavior = zoomBehavior;
 
-    // Cleanup function
     return () => {
       svg.on(".zoom", null);
     };
-  }, [countries]); // Re-run when countries change
+  }, [countries]);
 
   const handleResetZoom = () => {
     if (!svgRef.current) return;
@@ -103,30 +100,37 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  const getCountryColor = (countryCode: string): string => {
+  const baseFill =
+    theme === "dark"
+      ? MAPVIEW_COLORS.unvisitedFillDark
+      : MAPVIEW_COLORS.unvisitedFill;
+
+  const computeFill = (countryCode: string): string => {
+    if (getCountryFill) {
+      const custom = getCountryFill(countryCode, baseFill);
+      if (custom) return custom;
+    }
     const status = getCountryStatus(countryCode);
     if (status) {
       return STATUS_COLORS[status];
     }
-    return theme === "dark"
-      ? MAPVIEW_COLORS.unvisitedFillDark
-      : MAPVIEW_COLORS.unvisitedFill;
+    return baseFill;
   };
 
   if (isLoading) {
     return (
-      <div className="w-full bg-blue-50 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center aspect-[5/3] max-h-[600px]">
+      <div className="w-full bg-blue-50 dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center aspect-[5/3] max-h-[600px]">
         <div className="text-gray-600 dark:text-gray-300">Loading map...</div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full bg-blue-50 dark:bg-gray-700 rounded-lg flex items-center justify-center aspect-[5/3] max-h-[600px]">
-      {/* Export and Copy Buttons */}
-      <ExportButton svgRef={svgRef} onResetZoom={handleResetZoom} />
+    <div className="relative w-full bg-blue-50 dark:bg-slate-900 rounded-lg flex items-center justify-center aspect-[5/3] max-h-[600px]">
+      {showExport && (
+        <ExportButton svgRef={svgRef} onResetZoom={handleResetZoom} />
+      )}
 
-      {/* Zoom Instructions */}
       <div className="absolute top-2 left-2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300">
         Scroll to zoom • Drag to pan
       </div>
@@ -138,7 +142,7 @@ export const MapView: React.FC<MapViewProps> = ({
         height="100%"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
-        style={{ touchAction: "none" }} // Prevent default touch behaviors
+        style={{ touchAction: "none" }}
       >
         <g ref={gRef}>
           {countries.map((country, index) => {
@@ -148,30 +152,26 @@ export const MapView: React.FC<MapViewProps> = ({
             if (!pathData) return null;
             const isHovered = hoveredCountry === countryCode;
             const isSelected = selectedCountry === countryCode;
-            let fillColor =
-              getCountryColor(countryCode) ||
-              (theme === "dark"
-                ? MAPVIEW_COLORS.unvisitedFillDark
-                : MAPVIEW_COLORS.unvisitedFill);
-            if (isHovered && !isSelected) {
+            let fillColor = computeFill(countryCode);
+            if (!readonly && isHovered && !isSelected) {
               const status = getCountryStatus(countryCode);
               fillColor = status
                 ? STATUS_HOVER_COLORS[status]
                 : theme === "dark"
-                ? MAPVIEW_COLORS.hoverFillDark
-                : MAPVIEW_COLORS.hoverFill;
+                  ? MAPVIEW_COLORS.hoverFillDark
+                  : MAPVIEW_COLORS.hoverFill;
             }
             const strokeColor = isSelected
               ? theme === "dark"
                 ? MAPVIEW_COLORS.selectedStrokeDark
                 : MAPVIEW_COLORS.selectedStroke
               : isHovered
-              ? theme === "dark"
-                ? MAPVIEW_COLORS.hoverStrokeDark
-                : MAPVIEW_COLORS.hoverStroke
-              : theme === "dark"
-              ? MAPVIEW_COLORS.borderStrokeDark
-              : MAPVIEW_COLORS.borderStroke;
+                ? theme === "dark"
+                  ? MAPVIEW_COLORS.hoverStrokeDark
+                  : MAPVIEW_COLORS.hoverStroke
+                : theme === "dark"
+                  ? MAPVIEW_COLORS.borderStrokeDark
+                  : MAPVIEW_COLORS.borderStroke;
             const strokeWidth = String(isSelected || isHovered ? 2 : 0.5);
             return (
               <path
@@ -180,15 +180,24 @@ export const MapView: React.FC<MapViewProps> = ({
                 fill={fillColor}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
-                className="cursor-pointer transition-all duration-200"
+                className={
+                  readonly
+                    ? "transition-all duration-200"
+                    : "cursor-pointer transition-all duration-200"
+                }
                 onClick={(e) => {
+                  if (readonly || !onCountryClick) return;
                   e.stopPropagation();
                   onCountryClick(countryCode);
                 }}
-                onMouseEnter={() =>
-                  onCountryHover && onCountryHover(countryCode)
-                }
-                onMouseLeave={() => onCountryHover && onCountryHover(null)}
+                onMouseEnter={() => {
+                  if (readonly) return;
+                  if (onCountryHover) onCountryHover(countryCode);
+                }}
+                onMouseLeave={() => {
+                  if (readonly) return;
+                  if (onCountryHover) onCountryHover(null);
+                }}
               >
                 <title>{countryName || countryCode}</title>
               </path>

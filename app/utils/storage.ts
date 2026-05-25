@@ -1,29 +1,57 @@
 import { STATUS_CYCLE, STORAGE_KEYS } from "../constants";
 import { CountryEntry, MapData } from "../types";
 
-export const loadMapData = (): MapData => {
-  if (typeof window === "undefined") return {};
+/**
+ * MapDataStore is the seam that decouples UI/hook code from the persistence
+ * layer. Today we only ship a localStorage implementation; a future backend
+ * (e.g. Supabase) can plug in here without touching components.
+ */
+export interface MapDataStore {
+  load(): Promise<MapData> | MapData;
+  save(data: MapData): Promise<void> | void;
+}
 
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.USER_MAP_DATA);
-    if (!stored) return {};
+const isLegacyArray = (parsed: unknown): parsed is CountryEntry[] =>
+  Array.isArray(parsed);
 
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? convertArrayToObject(parsed) : parsed;
-  } catch (error) {
-    console.error("Error loading map data:", error);
-    return {};
-  }
+const convertArrayToObject = (entries: CountryEntry[]): MapData => {
+  return entries.reduce((acc, entry) => {
+    acc[entry.countryCode] = entry;
+    return acc;
+  }, {} as MapData);
 };
 
-export const saveMapData = (data: MapData): void => {
-  if (typeof window === "undefined") return;
+export const localStorageStore: MapDataStore = {
+  load(): MapData {
+    if (typeof window === "undefined") return {};
 
-  try {
-    localStorage.setItem(STORAGE_KEYS.USER_MAP_DATA, JSON.stringify(data));
-  } catch (error) {
-    console.error("Error saving map data:", error);
-  }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.USER_MAP_DATA);
+      if (!stored) return {};
+
+      const parsed = JSON.parse(stored);
+      return isLegacyArray(parsed) ? convertArrayToObject(parsed) : parsed;
+    } catch (error) {
+      console.error("Error loading map data:", error);
+      return {};
+    }
+  },
+
+  save(data: MapData): void {
+    if (typeof window === "undefined") return;
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.USER_MAP_DATA, JSON.stringify(data));
+    } catch (error) {
+      console.error("Error saving map data:", error);
+    }
+  },
+};
+
+// Back-compat exports for any direct importers; prefer the store above.
+export const loadMapData = (): MapData => localStorageStore.load() as MapData;
+export const saveMapData = (data: MapData): void => {
+  void localStorageStore.save(data);
 };
 
 export const updateCountryEntry = (
@@ -51,12 +79,10 @@ export const cycleCountryStatus = (
 ): MapData => {
   const currentEntry = data[countryCode];
 
-  // If no entry exists or no status, start with the first status in cycle
   if (!currentEntry || !currentEntry.status) {
     return updateCountryEntry(data, countryCode, { status: STATUS_CYCLE[0] });
   }
 
-  // Otherwise, cycle to the next status
   const currentIndex = STATUS_CYCLE.indexOf(currentEntry.status);
   const nextStatus = STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length];
 
@@ -72,10 +98,25 @@ export const removeCountryEntry = (
   return newData;
 };
 
-// Helper function to convert legacy array format to object format
-const convertArrayToObject = (entries: CountryEntry[]): MapData => {
-  return entries.reduce((acc, entry) => {
-    acc[entry.countryCode] = entry;
-    return acc;
-  }, {} as MapData);
+/**
+ * Merges `theirs` into `mine` using the chosen strategy:
+ * - "keep-mine": existing entries in `mine` win on collisions
+ * - "use-theirs": entries from `theirs` overwrite on collisions
+ */
+export const mergeMapData = (
+  mine: MapData,
+  theirs: MapData,
+  strategy: "keep-mine" | "use-theirs" = "keep-mine"
+): MapData => {
+  const result: MapData = { ...mine };
+  for (const [code, entry] of Object.entries(theirs)) {
+    if (result[code] && strategy === "keep-mine") continue;
+    // Never import notes/dates from a share link payload; only status.
+    result[code] = {
+      ...result[code],
+      countryCode: code,
+      status: entry.status,
+    };
+  }
+  return result;
 };

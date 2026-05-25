@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { Footer } from "./components/Footer";
+import { JsonLd, webApplicationLd } from "./components/JsonLd";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./globals.css";
@@ -16,9 +17,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://personal-world-map.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Personal World Map",
-  description: "Track your travels and plan your next adventures",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Personal World Map",
+    template: "%s · Personal World Map",
+  },
+  description:
+    "Track your travels and plan your next adventures on an interactive world map. No login required.",
+  applicationName: "Personal World Map",
+  manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    siteName: "Personal World Map",
+    title: "Personal World Map",
+    description:
+      "Track your travels and plan your next adventures on an interactive world map.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Personal World Map",
+    description:
+      "Track your travels and plan your next adventures on an interactive world map.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
@@ -31,9 +60,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <JsonLd data={webApplicationLd(SITE_URL)} />
         <ThemeProvider>
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-            {/* Header */}
             <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div className="flex items-center justify-between">
@@ -50,13 +79,11 @@ export default function RootLayout({
               </div>
             </header>
 
-            {/* Main Content */}
             <main className="flex-1">{children}</main>
 
-            {/* Footer */}
             <Footer />
           </div>
-          <Toaster position="top-right" />
+          <Toaster position="top-center" />
         </ThemeProvider>
       </body>
     </html>
