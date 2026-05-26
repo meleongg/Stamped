@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
           <div className="text-sm text-gray-600 dark:text-gray-300">
-            © {currentYear} Personal World Map. All rights reserved.
+            © {currentYear} Stamped. All rights reserved.
           </div>
           <div className="flex space-x-6 text-sm">
             <Link

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /m/
 Disallow: /compare/
 
-Sitemap: https://personal-world-map.vercel.app/sitemap.xml
+Sitemap: https://stamped-travel.vercel.app/sitemap.xml

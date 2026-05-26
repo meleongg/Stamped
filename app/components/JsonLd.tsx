@@ -14,9 +14,10 @@ export const JsonLd: React.FC<JsonLdProps> = ({ data }) => {
 export const webApplicationLd = (siteUrl: string) => ({
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Personal World Map",
+  name: "Stamped",
+  alternateName: "Stamped — Personal World Travel Map",
   description:
-    "Track your travels and plan your next adventures on an interactive world map.",
+    "Mark the countries you've visited, share your map with friends, and compare your travels side-by-side. No login required.",
   url: siteUrl,
   applicationCategory: "TravelApplication",
   operatingSystem: "Any",

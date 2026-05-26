@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { Stamp } from "lucide-react";
+import Link from "next/link";
 import { Toaster } from "sonner";
 import { Footer } from "./components/Footer";
 import { JsonLd, webApplicationLd } from "./components/JsonLd";
@@ -19,31 +21,31 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://personal-world-map.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://stamped-travel.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Personal World Map",
-    template: "%s · Personal World Map",
+    default: "Stamped — Your personal world travel map",
+    template: "%s · Stamped",
   },
   description:
-    "Track your travels and plan your next adventures on an interactive world map. No login required.",
-  applicationName: "Personal World Map",
+    "Stamped is a personal world travel map. Mark the countries you've visited, share your map with friends, and compare your travels side-by-side. No login required.",
+  applicationName: "Stamped",
   manifest: "/manifest.json",
   openGraph: {
     type: "website",
-    siteName: "Personal World Map",
-    title: "Personal World Map",
+    siteName: "Stamped",
+    title: "Stamped — Your personal world travel map",
     description:
-      "Track your travels and plan your next adventures on an interactive world map.",
+      "Mark the countries you've visited, share your map with friends, and compare your travels side-by-side.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Personal World Map",
+    title: "Stamped — Your personal world travel map",
     description:
-      "Track your travels and plan your next adventures on an interactive world map.",
+      "Mark the countries you've visited, share your map with friends, and compare your travels side-by-side.",
   },
 };
 
@@ -66,15 +68,24 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
             <header className="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                      Personal World Map
-                    </h1>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                      Track your travels and plan your next adventures
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between gap-4">
+                  <Link
+                    href="/"
+                    aria-label="Stamped home"
+                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white"
+                  >
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-900 text-white shadow-sm transition-transform duration-200 group-hover:-rotate-6 dark:bg-white dark:text-slate-900">
+                      <Stamp className="h-5 w-5" strokeWidth={2.25} />
+                    </span>
+                    <span className="leading-tight">
+                      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
+                        Stamped
+                      </h1>
+                      <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
+                        Your travels, stamped
+                      </p>
+                    </span>
+                  </Link>
                   <ThemeToggle />
                 </div>
               </div>
