@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "sonner";
 import { Footer } from "./components/Footer";
 import { JsonLd, webApplicationLd } from "./components/JsonLd";
@@ -83,8 +84,15 @@ export default function RootLayout({
 
             <Footer />
           </div>
-          <Toaster position="top-center" />
+          <Toaster
+            position="bottom-center"
+            theme="system"
+            richColors
+            closeButton={false}
+            duration={2500}
+          />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

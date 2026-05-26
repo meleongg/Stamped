@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, Copy, Share2 } from "lucide-react";
+import { track } from "@vercel/analytics";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MapData } from "../types";
@@ -72,6 +73,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
       window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
       setCopied(true);
       toast.success("Link copied to clipboard");
+      track("share_link_copied", { countries: Object.keys(mapData).length });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Couldn't copy. Select the link and copy manually.");
@@ -88,6 +90,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
           url: shareUrl,
         });
         window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
+        track("share_link_native", { countries: Object.keys(mapData).length });
       } catch {
         // User cancelled native share — no-op.
       }

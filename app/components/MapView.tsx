@@ -4,12 +4,22 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import "d3-transition";
 import { zoom, ZoomBehavior, zoomIdentity } from "d3-zoom";
-import { useEffect, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { MAP_DIMENSIONS, MAPVIEW_COLORS, STATUS_COLORS } from "../constants";
 import { useTheme } from "../contexts/ThemeContext";
 import { TravelStatus } from "../types";
 import { CountryFeature } from "../utils/geo";
 import { ExportButton } from "./ExportButton";
+import { MapTooltip, MapTooltipState } from "./MapTooltip";
+import { MapZoomControls } from "./MapZoomControls";
 
 const STATUS_HOVER_COLORS: Record<TravelStatus, string> = {
   visited: MAPVIEW_COLORS.visitedHover,
@@ -17,6 +27,12 @@ const STATUS_HOVER_COLORS: Record<TravelStatus, string> = {
   want_to_visit: MAPVIEW_COLORS.wantToVisitHover,
   avoid: MAPVIEW_COLORS.avoidHover,
 };
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 8;
+const ZOOM_STEP = 1.6;
+const TRANSITION_MS = 600;
+const CLICK_DISTANCE = 5;
 
 interface MapViewProps {
   getCountryStatus: (countryCode: string) => TravelStatus | null;
@@ -34,27 +50,64 @@ interface MapViewProps {
   showExport?: boolean;
 }
 
-export const MapView: React.FC<MapViewProps> = ({
-  getCountryStatus,
-  getCountryFill,
-  onCountryClick,
-  selectedCountry,
-  hoveredCountry,
-  onCountryHover,
-  countries,
-  isLoading,
-  readonly = false,
-  showExport = true,
-}) => {
+export interface MapViewHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  reset: () => void;
+  focusCountry: (countryCode: string) => void;
+}
+
+export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
+  {
+    getCountryStatus,
+    getCountryFill,
+    onCountryClick,
+    selectedCountry,
+    hoveredCountry,
+    onCountryHover,
+    countries,
+    isLoading,
+    readonly = false,
+    showExport = true,
+  },
+  ref,
+) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
+    null,
+  );
+  const [tooltip, setTooltip] = useState<MapTooltipState | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
   const { theme } = useTheme();
 
-  const projection = geoNaturalEarth1()
-    .scale(180)
-    .translate([MAP_DIMENSIONS.WIDTH / 2, MAP_DIMENSIONS.HEIGHT / 2 + 20]);
+  const projection = useMemo(
+    () =>
+      geoNaturalEarth1()
+        .scale(180)
+        .translate([MAP_DIMENSIONS.WIDTH / 2, MAP_DIMENSIONS.HEIGHT / 2 + 20]),
+    [],
+  );
 
-  const pathGenerator = geoPath().projection(projection);
+  const pathGenerator = useMemo(
+    () => geoPath().projection(projection),
+    [projection],
+  );
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const update = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
@@ -62,43 +115,103 @@ export const MapView: React.FC<MapViewProps> = ({
     const svg = select(svgRef.current);
     const g = select(gRef.current);
 
-    const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<
-      SVGSVGElement,
-      unknown
-    >()
-      .scaleExtent([0.5, 8])
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([MIN_SCALE, MAX_SCALE])
+      .translateExtent([
+        [0, 0],
+        [MAP_DIMENSIONS.WIDTH, MAP_DIMENSIONS.HEIGHT],
+      ])
+      .clickDistance(CLICK_DISTANCE)
+      // d3-zoom's default filter, restored: allow trackpad pinch (wheel +
+      // ctrlKey) which the previous filter was incorrectly blocking on Mac.
       .filter((event) => {
-        return !event.ctrlKey && !event.button;
+        return (
+          (!event.ctrlKey || event.type === "wheel") && !event.button
+        );
+      })
+      .on("start", (event) => {
+        if (event.sourceEvent?.type === "mousedown") setIsPanning(true);
       })
       .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-      });
+        g.attr("transform", event.transform.toString());
+      })
+      .on("end", () => setIsPanning(false));
 
     svg.call(zoomBehavior);
-
-    const svgNode = svg.node() as SVGSVGElement & {
-      __zoomBehavior?: ZoomBehavior<SVGSVGElement, unknown>;
-    };
-    svgNode.__zoomBehavior = zoomBehavior;
+    zoomBehaviorRef.current = zoomBehavior;
 
     return () => {
       svg.on(".zoom", null);
+      zoomBehaviorRef.current = null;
     };
   }, [countries]);
 
-  const handleResetZoom = () => {
-    if (!svgRef.current) return;
+  const animateZoomBy = useCallback((factor: number) => {
+    if (!svgRef.current || !zoomBehaviorRef.current) return;
+    select(svgRef.current)
+      .transition()
+      .duration(300)
+      .call(zoomBehaviorRef.current.scaleBy, factor);
+  }, []);
 
-    const svg = select(svgRef.current);
-    const svgNode = svg.node() as SVGSVGElement & {
-      __zoomBehavior?: ZoomBehavior<SVGSVGElement, unknown>;
-    };
-    const zoomBehavior = svgNode.__zoomBehavior;
+  const handleZoomIn = useCallback(() => animateZoomBy(ZOOM_STEP), [animateZoomBy]);
+  const handleZoomOut = useCallback(
+    () => animateZoomBy(1 / ZOOM_STEP),
+    [animateZoomBy],
+  );
 
-    if (zoomBehavior) {
-      svg.transition().duration(750).call(zoomBehavior.transform, zoomIdentity);
-    }
-  };
+  const handleReset = useCallback(() => {
+    if (!svgRef.current || !zoomBehaviorRef.current) return;
+    select(svgRef.current)
+      .transition()
+      .duration(TRANSITION_MS)
+      .call(zoomBehaviorRef.current.transform, zoomIdentity);
+  }, []);
+
+  const focusCountry = useCallback(
+    (countryCode: string) => {
+      if (!svgRef.current || !zoomBehaviorRef.current) return;
+      const target = countries.find((c) => String(c.id) === countryCode);
+      if (!target) return;
+
+      const [[x0, y0], [x1, y1]] = pathGenerator.bounds(target);
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+
+      // Fit the country bounds into ~60% of the viewport, clamped to scaleExtent.
+      const scale = Math.max(
+        MIN_SCALE,
+        Math.min(
+          MAX_SCALE,
+          0.6 / Math.max(dx / MAP_DIMENSIONS.WIDTH, dy / MAP_DIMENSIONS.HEIGHT),
+        ),
+      );
+
+      const transform = zoomIdentity
+        .translate(MAP_DIMENSIONS.WIDTH / 2, MAP_DIMENSIONS.HEIGHT / 2)
+        .scale(scale)
+        .translate(-cx, -cy);
+
+      select(svgRef.current)
+        .transition()
+        .duration(TRANSITION_MS)
+        .call(zoomBehaviorRef.current.transform, transform);
+    },
+    [countries, pathGenerator],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      zoomIn: handleZoomIn,
+      zoomOut: handleZoomOut,
+      reset: handleReset,
+      focusCountry,
+    }),
+    [handleZoomIn, handleZoomOut, handleReset, focusCountry],
+  );
 
   const baseFill =
     theme === "dark"
@@ -117,6 +230,22 @@ export const MapView: React.FC<MapViewProps> = ({
     return baseFill;
   };
 
+  const handlePointerMoveOnPath = (
+    event: React.PointerEvent<SVGPathElement>,
+    countryCode: string,
+    countryName: string,
+  ) => {
+    if (event.pointerType === "touch") return; // tooltip is mouse-only
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltip({
+      name: countryName,
+      status: getCountryStatus(countryCode),
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="w-full bg-blue-50 dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center aspect-[5/3] max-h-[600px]">
@@ -126,14 +255,17 @@ export const MapView: React.FC<MapViewProps> = ({
   }
 
   return (
-    <div className="relative w-full bg-blue-50 dark:bg-slate-900 rounded-lg flex items-center justify-center aspect-[5/3] max-h-[600px]">
-      {showExport && (
-        <ExportButton svgRef={svgRef} onResetZoom={handleResetZoom} />
-      )}
-
-      <div className="absolute top-2 left-2 z-10 bg-white/90 dark:bg-gray-800/90 rounded-md px-2 py-1 text-xs text-gray-600 dark:text-gray-300">
-        Scroll to zoom • Drag to pan
-      </div>
+    <div
+      ref={containerRef}
+      className="relative w-full bg-blue-50 dark:bg-slate-900 rounded-lg flex items-center justify-center aspect-[5/3] max-h-[600px]"
+      onPointerLeave={() => setTooltip(null)}
+    >
+      <MapZoomControls
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onReset={handleReset}
+      />
+      {showExport && <ExportButton svgRef={svgRef} />}
 
       <svg
         ref={svgRef}
@@ -142,7 +274,10 @@ export const MapView: React.FC<MapViewProps> = ({
         height="100%"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
-        style={{ touchAction: "none" }}
+        style={{
+          touchAction: "none",
+          cursor: isPanning ? "grabbing" : "grab",
+        }}
       >
         <g ref={gRef}>
           {countries.map((country, index) => {
@@ -182,29 +317,32 @@ export const MapView: React.FC<MapViewProps> = ({
                 strokeWidth={strokeWidth}
                 className={
                   readonly
-                    ? "transition-all duration-200"
-                    : "cursor-pointer transition-all duration-200"
+                    ? "transition-colors duration-150"
+                    : "cursor-pointer transition-colors duration-150"
                 }
                 onClick={(e) => {
                   if (readonly || !onCountryClick) return;
                   e.stopPropagation();
                   onCountryClick(countryCode);
                 }}
-                onMouseEnter={() => {
-                  if (readonly) return;
-                  if (onCountryHover) onCountryHover(countryCode);
+                onPointerMove={(e) =>
+                  handlePointerMoveOnPath(e, countryCode, countryName)
+                }
+                onPointerEnter={(e) => {
+                  if (e.pointerType !== "mouse") return;
+                  if (!readonly && onCountryHover) onCountryHover(countryCode);
                 }}
-                onMouseLeave={() => {
-                  if (readonly) return;
-                  if (onCountryHover) onCountryHover(null);
+                onPointerLeave={(e) => {
+                  if (e.pointerType !== "mouse") return;
+                  if (!readonly && onCountryHover) onCountryHover(null);
                 }}
-              >
-                <title>{countryName || countryCode}</title>
-              </path>
+              />
             );
           })}
         </g>
       </svg>
+
+      <MapTooltip state={tooltip} containerWidth={containerWidth} />
     </div>
   );
-};
+});

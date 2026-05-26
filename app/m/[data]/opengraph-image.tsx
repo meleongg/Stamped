@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { STATUS_COLORS } from "@/app/constants";
-import { TravelStatus } from "@/app/types";
+import { MapData, TravelStatus } from "@/app/types";
 import { loadCountries } from "@/app/utils/geo";
 import { InvalidShareLinkError, decodeMap } from "@/app/utils/share";
+import { computeStats } from "@/app/utils/stats";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -11,8 +12,8 @@ export const size = { width: 1200, height: 630 };
 export const alt = "Travel map";
 
 const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 540;
-const HEADER_HEIGHT = 90;
+const MAP_HEIGHT = 520;
+const HEADER_HEIGHT = 110;
 
 const STATUS_LABELS_SHORT: Record<TravelStatus, string> = {
   visited: "visited",
@@ -34,23 +35,22 @@ export default async function OpenGraphImage({
 
   let name = "Travel";
   let statusByCountry: Record<string, TravelStatus> = {};
-  let counts: Partial<Record<TravelStatus, number>> = {};
+  let mapData: MapData = {};
 
   try {
     const decoded = decodeMap(encoded);
     name = decoded.name;
+    mapData = decoded.data;
     statusByCountry = Object.fromEntries(
-      Object.entries(decoded.data).map(([code, entry]) => [code, entry.status])
+      Object.entries(mapData).map(([code, entry]) => [code, entry.status]),
     );
-    counts = Object.values(decoded.data).reduce((acc, entry) => {
-      acc[entry.status] = (acc[entry.status] || 0) + 1;
-      return acc;
-    }, {} as Partial<Record<TravelStatus, number>>);
   } catch (error) {
     if (!(error instanceof InvalidShareLinkError)) {
       console.error("OG decode error:", error);
     }
   }
+
+  const stats = computeStats(mapData);
 
   const countries = loadCountries();
 
@@ -71,14 +71,27 @@ export default async function OpenGraphImage({
     })
     .filter(Boolean) as Array<{ d: string; fill: string; code: string }>;
 
-  const total = Object.values(counts).reduce((s, n) => s + (n || 0), 0);
   const statsLine =
-    total === 0
+    stats.totalMarked === 0
       ? "Track your travels on a world map"
-      : (["visited", "planning", "want_to_visit", "avoid"] as TravelStatus[])
-          .filter((s) => (counts[s] || 0) > 0)
-          .map((s) => `${counts[s]} ${STATUS_LABELS_SHORT[s]}`)
+      : [
+          `${stats.visitedCount} visited`,
+          stats.visitedPercent > 0
+            ? `${stats.visitedPercent}% of the world`
+            : null,
+          stats.continentsCount > 0
+            ? `${stats.continentsCount} / ${stats.totalContinents} continents`
+            : null,
+        ]
+          .filter(Boolean)
           .join("  ·  ");
+
+  const subStatusLine = (
+    ["planning", "want_to_visit", "avoid"] as TravelStatus[]
+  )
+    .filter((s) => (stats.byStatus[s] || 0) > 0)
+    .map((s) => `${stats.byStatus[s]} ${STATUS_LABELS_SHORT[s]}`)
+    .join("  ·  ");
 
   return new ImageResponse(
     (
@@ -123,6 +136,18 @@ export default async function OpenGraphImage({
           >
             {statsLine}
           </div>
+          {subStatusLine && (
+            <div
+              style={{
+                fontSize: 16,
+                color: "#94a3b8",
+                marginTop: 2,
+                display: "flex",
+              }}
+            >
+              {subStatusLine}
+            </div>
+          )}
         </div>
         <div
           style={{
