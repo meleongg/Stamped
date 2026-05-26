@@ -10,10 +10,7 @@ import { toast } from "sonner";
 import { MapView } from "@/app/components/MapView";
 import { MapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
-import {
-  localStorageStore,
-  mergeMapData,
-} from "@/app/utils/storage";
+import { localStorageStore, mergeMapData } from "@/app/utils/storage";
 
 interface CompareViewProps {
   theirEncoded: string;
@@ -45,21 +42,20 @@ export const CompareView: React.FC<CompareViewProps> = ({
   theirName,
   theirData,
 }) => {
-  const [countries, setCountries] = useState<CountryFeature[]>([]);
-  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [countries] = useState<CountryFeature[]>(() => loadCountries());
   const [mine, setMine] = useState<MapData>({});
   const [mineLoading, setMineLoading] = useState(true);
 
   useEffect(() => {
-    setCountries(loadCountries());
-    setIsMapLoading(false);
-  }, []);
-
-  useEffect(() => {
-    Promise.resolve(localStorageStore.load()).then((data) => {
+    let cancelled = false;
+    void Promise.resolve(localStorageStore.load()).then((data) => {
+      if (cancelled) return;
       setMine(data);
       setMineLoading(false);
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const getCategory = (countryCode: string): OverlayCategory => {
@@ -95,7 +91,9 @@ export const CompareView: React.FC<CompareViewProps> = ({
 
   const uniqueToThem = useMemo(() => {
     return Object.entries(theirData)
-      .filter(([code, entry]) => entry.status === "visited" && !isVisited(mine[code]))
+      .filter(
+        ([code, entry]) => entry.status === "visited" && !isVisited(mine[code]),
+      )
       .map(([code]) => code);
   }, [mine, theirData]);
 
@@ -111,7 +109,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
       toast.success(
         `Added ${uniqueToThem.length} ${
           uniqueToThem.length === 1 ? "country" : "countries"
-        } as "want to visit"`
+        } as "want to visit"`,
       );
     } catch {
       toast.error("Couldn't import. Please try again.");
@@ -120,7 +118,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
 
   if (mineLoading) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center text-gray-600 dark:text-gray-300">
+      <div className="flex min-h-[40vh] items-center justify-center text-gray-600 dark:text-gray-300">
         Loading your map…
       </div>
     );
@@ -128,26 +126,27 @@ export const CompareView: React.FC<CompareViewProps> = ({
 
   return (
     <>
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             You vs {theirName}
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-            Visited-country overlap. Plans and want-to-visit aren&apos;t counted here.
+            Visited-country overlap. Plans and want-to-visit aren&apos;t counted
+            here.
           </p>
         </div>
         <Button asChild variant="ghost">
           <Link href={`/m/${theirEncoded}`} className="flex items-center gap-2">
-            <Home className="w-4 h-4" />
+            <Home className="h-4 w-4" />
             Back to {theirName}&apos;s map
           </Link>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        <div className="lg:col-span-1 flex flex-col gap-6">
-          <Card className="p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
+        <div className="flex flex-col gap-6 lg:col-span-1">
+          <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <CardHeader className="pb-2">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                 Overlap
@@ -156,37 +155,34 @@ export const CompareView: React.FC<CompareViewProps> = ({
             <CardContent className="space-y-2">
               {(["both", "onlyMine", "onlyTheirs"] as OverlayCategory[]).map(
                 (cat) => (
-                  <div
-                    key={cat}
-                    className="flex items-center justify-between"
-                  >
+                  <div key={cat} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <div
-                        className="w-4 h-4 rounded-full"
+                        className="h-4 w-4 rounded-full"
                         style={{ backgroundColor: CATEGORY_COLORS[cat] }}
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {cat === "onlyMine"
                           ? "Only me"
                           : cat === "onlyTheirs"
-                          ? `Only ${theirName}`
-                          : CATEGORY_LABELS[cat]}
+                            ? `Only ${theirName}`
+                            : CATEGORY_LABELS[cat]}
                       </span>
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                     >
                       {stats[cat]}
                     </Badge>
                   </div>
-                )
+                ),
               )}
             </CardContent>
           </Card>
 
           {uniqueToThem.length > 0 && (
-            <Card className="p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
               <CardHeader className="pb-2">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                   Explore together
@@ -210,14 +206,14 @@ export const CompareView: React.FC<CompareViewProps> = ({
           )}
         </div>
 
-        <div className="lg:col-span-3 flex justify-center items-center">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 w-full max-w-4xl mx-auto overflow-hidden flex items-center justify-center">
+        <div className="flex items-center justify-center lg:col-span-3">
+          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
             <div className="w-full">
               <MapView
                 getCountryStatus={() => null}
                 getCountryFill={(code) => getCountryFill(code)}
                 countries={countries}
-                isLoading={isMapLoading}
+                isLoading={false}
                 readonly
                 showExport={false}
               />

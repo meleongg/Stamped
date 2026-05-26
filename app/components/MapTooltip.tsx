@@ -25,7 +25,8 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
   if (!state) return null;
 
   // Flip to the left of the cursor when near the right edge.
-  const goLeft = state.x + TOOLTIP_OFFSET + TOOLTIP_ESTIMATED_WIDTH > containerWidth;
+  const goLeft =
+    state.x + TOOLTIP_OFFSET + TOOLTIP_ESTIMATED_WIDTH > containerWidth;
   const left = goLeft
     ? state.x - TOOLTIP_OFFSET - TOOLTIP_ESTIMATED_WIDTH
     : state.x + TOOLTIP_OFFSET;

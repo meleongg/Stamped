@@ -11,7 +11,7 @@ interface LegendProps {
 
 export const Legend: React.FC<LegendProps> = ({ counts }) => {
   return (
-    <Card className="p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+    <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <CardHeader className="pb-2">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
           Legend
@@ -24,7 +24,7 @@ export const Legend: React.FC<LegendProps> = ({ counts }) => {
             <div key={status} className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div
-                  className="w-4 h-4 rounded-full"
+                  className="h-4 w-4 rounded-full"
                   style={{ backgroundColor: color }}
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -33,14 +33,14 @@ export const Legend: React.FC<LegendProps> = ({ counts }) => {
               </div>
               <Badge
                 variant="secondary"
-                className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
               >
                 {count}
               </Badge>
             </div>
           );
         })}
-        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-600">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Total Countries
           </span>

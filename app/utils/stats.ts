@@ -26,10 +26,7 @@ export interface MapStats {
 export const TOTAL_COUNTRIES_IN_WORLD = 195;
 
 const isStatus = (s: unknown): s is TravelStatus =>
-  s === "visited" ||
-  s === "planning" ||
-  s === "want_to_visit" ||
-  s === "avoid";
+  s === "visited" || s === "planning" || s === "want_to_visit" || s === "avoid";
 
 const parseYear = (entry: CountryEntry): number | null => {
   if (!entry.visitedAt) return null;

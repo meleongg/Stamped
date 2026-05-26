@@ -30,43 +30,40 @@ function Calendar({
         month: cn(defaults.month, "flex flex-col gap-3"),
         month_caption: cn(
           defaults.month_caption,
-          "flex items-center justify-center h-9 px-9 relative"
+          "flex items-center justify-center h-9 px-9 relative",
         ),
         caption_label: cn(
           defaults.caption_label,
-          "text-sm font-semibold text-foreground"
+          "text-sm font-semibold text-foreground",
         ),
         nav: cn(defaults.nav, "absolute inset-x-0 top-0 flex justify-between"),
         button_previous: cn(
           defaults.button_previous,
-          "inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent text-foreground/70 hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+          "inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent text-foreground/70 hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:pointer-events-none cursor-pointer",
         ),
         button_next: cn(
           defaults.button_next,
-          "inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent text-foreground/70 hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+          "inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent text-foreground/70 hover:bg-accent hover:text-accent-foreground disabled:opacity-40 disabled:pointer-events-none cursor-pointer",
         ),
         month_grid: cn(defaults.month_grid, "w-full border-collapse"),
         weekdays: cn(defaults.weekdays, "flex"),
         weekday: cn(
           defaults.weekday,
-          "w-9 text-[0.7rem] font-medium text-muted-foreground uppercase tracking-wide"
+          "w-9 text-[0.7rem] font-medium text-muted-foreground uppercase tracking-wide",
         ),
         week: cn(defaults.week, "flex w-full mt-1"),
-        day: cn(
-          defaults.day,
-          "relative h-9 w-9 p-0 text-center align-middle"
-        ),
+        day: cn(defaults.day, "relative h-9 w-9 p-0 text-center align-middle"),
         day_button: cn(
           defaults.day_button,
-          "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+          "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer disabled:opacity-30 disabled:pointer-events-none",
         ),
         selected: cn(
           defaults.selected,
-          "[&_button]:bg-primary [&_button]:text-primary-foreground [&_button]:hover:bg-primary [&_button]:hover:text-primary-foreground [&_button]:font-semibold"
+          "[&_button]:bg-primary [&_button]:text-primary-foreground [&_button]:hover:bg-primary [&_button]:hover:text-primary-foreground [&_button]:font-semibold",
         ),
         today: cn(
           defaults.today,
-          "[&_button]:ring-1 [&_button]:ring-inset [&_button]:ring-primary/40"
+          "[&_button]:ring-1 [&_button]:ring-inset [&_button]:ring-primary/40",
         ),
         outside: cn(defaults.outside, "[&_button]:text-muted-foreground/50"),
         disabled: cn(defaults.disabled, "[&_button]:opacity-30"),

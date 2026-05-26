@@ -24,10 +24,7 @@ import { MapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { decodeMap } from "@/app/utils/share";
 import { computeStats } from "@/app/utils/stats";
-import {
-  localStorageStore,
-  mergeMapData,
-} from "@/app/utils/storage";
+import { localStorageStore, mergeMapData } from "@/app/utils/storage";
 
 interface SharedMapViewProps {
   encoded: string;
@@ -38,16 +35,19 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   encoded,
   ownerName,
 }) => {
-  const [countries, setCountries] = useState<CountryFeature[]>([]);
-  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [countries] = useState<CountryFeature[]>(() => loadCountries());
   const [myData, setMyData] = useState<MapData>({});
   const mapRef = useRef<MapViewHandle>(null);
 
   useEffect(() => {
-    setCountries(loadCountries());
-    setIsMapLoading(false);
-    Promise.resolve(localStorageStore.load()).then((d) => setMyData(d));
+    let cancelled = false;
+    void Promise.resolve(localStorageStore.load()).then((d) => {
+      if (!cancelled) setMyData(d);
+    });
     track("share_link_viewed");
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const decoded = useMemo(() => decodeMap(encoded), [encoded]);
@@ -58,10 +58,13 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   };
 
   const counts = useMemo(() => {
-    return Object.values(decoded.data).reduce((acc, entry) => {
-      acc[entry.status] = (acc[entry.status] || 0) + 1;
-      return acc;
-    }, {} as Record<TravelStatus, number>);
+    return Object.values(decoded.data).reduce(
+      (acc, entry) => {
+        acc[entry.status] = (acc[entry.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<TravelStatus, number>,
+    );
   }, [decoded.data]);
 
   const handleCopyLink = async () => {
@@ -101,18 +104,18 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        <div className="lg:col-span-1 flex flex-col gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
+        <div className="flex flex-col gap-6 lg:col-span-1">
           <Legend counts={counts} />
           <Stats stats={stats} />
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+          <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
             <Button
               onClick={handleCopyLink}
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 cursor-pointer"
+              className="flex w-full cursor-pointer items-center justify-center gap-2"
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="h-4 w-4" />
               Copy share link
             </Button>
             <Button asChild variant="outline" className="w-full">
@@ -120,7 +123,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                 href={`/compare/${encoded}`}
                 className="flex items-center justify-center gap-2"
               >
-                <GitCompareArrows className="w-4 h-4" />
+                <GitCompareArrows className="h-4 w-4" />
                 Compare with my map
               </Link>
             </Button>
@@ -128,9 +131,9 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
               <DialogTrigger asChild>
                 <Button
                   variant="default"
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="h-4 w-4" />
                   Import to my map
                 </Button>
               </DialogTrigger>
@@ -174,21 +177,15 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                   </Button>
                 </div>
                 <DialogFooter>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setImportOpen(false)}
-                  >
+                  <Button variant="ghost" onClick={() => setImportOpen(false)}>
                     Cancel
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
             <Button asChild variant="ghost" className="w-full">
-              <Link
-                href="/"
-                className="flex items-center justify-center gap-2"
-              >
-                <Home className="w-4 h-4" />
+              <Link href="/" className="flex items-center justify-center gap-2">
+                <Home className="h-4 w-4" />
                 Go to my own map
               </Link>
             </Button>
@@ -197,20 +194,20 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
           <ShareDialog mapData={myData} />
         </div>
 
-        <div className="lg:col-span-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
             onSelect={handleSearchSelect}
             placeholder={`Search ${ownerName}'s countries...`}
           />
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 w-full max-w-4xl mx-auto overflow-hidden flex items-center justify-center">
+          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
             <div className="w-full">
               <MapView
                 ref={mapRef}
                 getCountryStatus={getCountryStatus}
                 countries={countries}
-                isLoading={isMapLoading}
+                isLoading={false}
                 readonly
                 showExport={false}
               />

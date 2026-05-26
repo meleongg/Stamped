@@ -74,7 +74,7 @@ const generateMapFilename = (): string => {
  * Exports SVG map as PNG file download
  */
 export const exportMapAsPNG = async (
-  svgElement: SVGSVGElement
+  svgElement: SVGSVGElement,
 ): Promise<void> => {
   if (typeof window === "undefined") {
     throw new Error("Window not available");
@@ -99,7 +99,7 @@ export const exportMapAsPNG = async (
  * Copies SVG map as PNG to clipboard
  */
 export const copyMapToClipboard = async (
-  svgElement: SVGSVGElement
+  svgElement: SVGSVGElement,
 ): Promise<void> => {
   if (typeof window === "undefined") {
     throw new Error("Window not available");

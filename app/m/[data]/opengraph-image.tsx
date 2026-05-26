@@ -94,94 +94,92 @@ export default async function OpenGraphImage({
     .join("  ·  ");
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#ffffff",
+      }}
+    >
       <div
         style={{
-          width: "100%",
-          height: "100%",
+          height: HEADER_HEIGHT,
+          paddingLeft: 48,
+          paddingRight: 48,
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#ffffff",
+          justifyContent: "center",
+          backgroundColor: "#0f172a",
+          color: "#ffffff",
         }}
       >
         <div
           style={{
-            height: HEADER_HEIGHT,
-            paddingLeft: 48,
-            paddingRight: 48,
+            fontSize: 38,
+            fontWeight: 700,
+            lineHeight: 1.1,
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            backgroundColor: "#0f172a",
-            color: "#ffffff",
           }}
         >
-          <div
-            style={{
-              fontSize: 38,
-              fontWeight: 700,
-              lineHeight: 1.1,
-              display: "flex",
-            }}
-          >
-            {name}&apos;s travel map
-          </div>
-          <div
-            style={{
-              fontSize: 20,
-              color: "#cbd5e1",
-              marginTop: 4,
-              display: "flex",
-            }}
-          >
-            {statsLine}
-          </div>
-          {subStatusLine && (
-            <div
-              style={{
-                fontSize: 16,
-                color: "#94a3b8",
-                marginTop: 2,
-                display: "flex",
-              }}
-            >
-              {subStatusLine}
-            </div>
-          )}
+          {name}&apos;s travel map
         </div>
         <div
           style={{
-            position: "relative",
-            width: MAP_WIDTH,
-            height: MAP_HEIGHT,
+            fontSize: 20,
+            color: "#cbd5e1",
+            marginTop: 4,
             display: "flex",
-            backgroundColor: "#dbeafe",
           }}
         >
-          <svg
-            width={MAP_WIDTH}
-            height={MAP_HEIGHT}
-            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {paths.map((p, i) => (
-              <path
-                key={i}
-                d={p.d}
-                fill={p.fill}
-                stroke="#475569"
-                strokeWidth={0.4}
-              />
-            ))}
-          </svg>
+          {statsLine}
         </div>
+        {subStatusLine && (
+          <div
+            style={{
+              fontSize: 16,
+              color: "#94a3b8",
+              marginTop: 2,
+              display: "flex",
+            }}
+          >
+            {subStatusLine}
+          </div>
+        )}
       </div>
-    ),
+      <div
+        style={{
+          position: "relative",
+          width: MAP_WIDTH,
+          height: MAP_HEIGHT,
+          display: "flex",
+          backgroundColor: "#dbeafe",
+        }}
+      >
+        <svg
+          width={MAP_WIDTH}
+          height={MAP_HEIGHT}
+          viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {paths.map((p, i) => (
+            <path
+              key={i}
+              d={p.d}
+              fill={p.fill}
+              stroke="#475569"
+              strokeWidth={0.4}
+            />
+          ))}
+        </svg>
+      </div>
+    </div>,
     {
       ...size,
       headers: {
         "cache-control": "public, immutable, no-transform, max-age=31536000",
       },
-    }
+    },
   );
 }

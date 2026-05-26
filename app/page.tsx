@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CountrySearch } from "@/app/components/CountrySearch";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
@@ -12,14 +12,8 @@ import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { computeStats } from "@/app/utils/stats";
 
 export default function Home() {
-  const [countries, setCountries] = useState<CountryFeature[]>([]);
-  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [countries] = useState<CountryFeature[]>(() => loadCountries());
   const mapRef = useRef<MapViewHandle>(null);
-
-  useEffect(() => {
-    setCountries(loadCountries());
-    setIsMapLoading(false);
-  }, []);
 
   const {
     mapData,
@@ -62,7 +56,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-xl text-gray-600 dark:text-gray-300">
             Loading...
           </div>
@@ -72,22 +66,21 @@ export default function Home() {
   }
 
   const selectedCountryName = selectedCountry
-    ? countries.find(
-        (c: CountryFeature) => String(c.id) === selectedCountry,
-      )?.properties.name || selectedCountry.toUpperCase()
+    ? countries.find((c: CountryFeature) => String(c.id) === selectedCountry)
+        ?.properties.name || selectedCountry.toUpperCase()
     : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        <div className="lg:col-span-1 flex flex-col gap-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
+        <div className="flex flex-col gap-6 lg:col-span-1">
           <Legend counts={getTotalCountsByStatus()} />
           <Stats stats={stats} />
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="mb-3 text-lg font-semibold text-gray-800 dark:text-white">
               How to Use
             </h3>
-            <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
               <li>• Tap or search for a country to select it</li>
               <li>• Click again to cycle through statuses</li>
               <li>• Add notes and visit dates in the sidebar</li>
@@ -97,13 +90,13 @@ export default function Home() {
           </div>
           <ShareDialog mapData={mapData} />
         </div>
-        <div className="lg:col-span-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
             onSelect={handleSearchSelect}
           />
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700 w-full max-w-4xl mx-auto overflow-hidden flex items-center justify-center">
+          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
             <div className="w-full">
               <MapView
                 ref={mapRef}
@@ -113,13 +106,14 @@ export default function Home() {
                 hoveredCountry={hoveredCountry}
                 onCountryHover={handleCountryHover}
                 countries={countries}
-                isLoading={isMapLoading}
+                isLoading={false}
               />
             </div>
           </div>
         </div>
       </div>
       <NoteSidebar
+        key={selectedCountry ?? "none"}
         countryCode={selectedCountry}
         countryName={selectedCountryName}
         countryData={selectedCountry ? getCountryData(selectedCountry) : null}

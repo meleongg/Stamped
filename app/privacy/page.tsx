@@ -6,11 +6,11 @@ import Link from "next/link";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Link href="/">
           <Button variant="ghost" size="sm" className="mb-4 cursor-pointer">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Map
           </Button>
         </Link>
@@ -19,13 +19,13 @@ export default function PrivacyPolicy() {
         </h1>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 border border-gray-200 dark:border-gray-700">
+      <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="prose dark:prose-invert max-w-none">
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="mb-6 text-gray-600 dark:text-gray-300">
             <strong>Last updated:</strong> {new Date().toLocaleDateString()}
           </p>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Data Collection and Storage
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
             personal information on external servers.
           </p>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Local Storage
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
@@ -42,20 +42,20 @@ export default function PrivacyPolicy() {
             dates, is stored locally in your browser&apos;s localStorage. This
             data:
           </p>
-          <ul className="list-disc ml-6 mb-4 text-gray-700 dark:text-gray-300">
+          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
             <li>Remains on your device only</li>
             <li>Is not transmitted to any external servers</li>
             <li>Can be cleared by clearing your browser data</li>
             <li>Is not accessible to other websites</li>
           </ul>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Third-Party Services
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
             We use the following third-party services:
           </p>
-          <ul className="list-disc ml-6 mb-4 text-gray-700 dark:text-gray-300">
+          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
             <li>
               <strong>World Atlas CDN:</strong> For loading geographic map data
               (countries-110m.json)
@@ -66,7 +66,7 @@ export default function PrivacyPolicy() {
             </li>
           </ul>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Analytics and Tracking
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
@@ -74,7 +74,7 @@ export default function PrivacyPolicy() {
             user behavior data is collected.
           </p>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Data Security
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
@@ -83,7 +83,7 @@ export default function PrivacyPolicy() {
             recommend keeping your browser and device updated.
           </p>
 
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Contact Information
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">

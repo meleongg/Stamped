@@ -31,7 +31,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
       : null;
 
   return (
-    <Card className="p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+    <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       <CardHeader className="pb-2">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
           Stats
@@ -67,7 +67,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
           </span>
         </div>
         {continentsCovered.length > 0 && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+          <div className="-mt-2 text-xs text-gray-500 dark:text-gray-400">
             {continentsCovered.join(" · ")}
           </div>
         )}

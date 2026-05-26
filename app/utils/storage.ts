@@ -57,7 +57,7 @@ export const saveMapData = (data: MapData): void => {
 export const updateCountryEntry = (
   data: MapData,
   countryCode: string,
-  updates: Partial<CountryEntry>
+  updates: Partial<CountryEntry>,
 ): MapData => {
   const existing = data[countryCode];
   const updatedEntry: CountryEntry = {
@@ -75,7 +75,7 @@ export const updateCountryEntry = (
 
 export const cycleCountryStatus = (
   data: MapData,
-  countryCode: string
+  countryCode: string,
 ): MapData => {
   const currentEntry = data[countryCode];
 
@@ -91,7 +91,7 @@ export const cycleCountryStatus = (
 
 export const removeCountryEntry = (
   data: MapData,
-  countryCode: string
+  countryCode: string,
 ): MapData => {
   const newData = { ...data };
   delete newData[countryCode];
@@ -106,7 +106,7 @@ export const removeCountryEntry = (
 export const mergeMapData = (
   mine: MapData,
   theirs: MapData,
-  strategy: "keep-mine" | "use-theirs" = "keep-mine"
+  strategy: "keep-mine" | "use-theirs" = "keep-mine",
 ): MapData => {
   const result: MapData = { ...mine };
   for (const [code, entry] of Object.entries(theirs)) {

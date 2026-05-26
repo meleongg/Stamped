@@ -11,11 +11,14 @@ const STATUS_TO_CHAR: Record<TravelStatus, string> = {
 };
 
 const CHAR_TO_STATUS: Record<string, TravelStatus> = Object.entries(
-  STATUS_TO_CHAR
-).reduce((acc, [status, char]) => {
-  acc[char] = status as TravelStatus;
-  return acc;
-}, {} as Record<string, TravelStatus>);
+  STATUS_TO_CHAR,
+).reduce(
+  (acc, [status, char]) => {
+    acc[char] = status as TravelStatus;
+    return acc;
+  },
+  {} as Record<string, TravelStatus>,
+);
 
 export class InvalidShareLinkError extends Error {
   constructor(message: string) {
@@ -36,7 +39,6 @@ export interface DecodedShare extends SharePayload {
 export const sanitizeName = (raw: string): string => {
   // Strip newlines and control chars; collapse whitespace; trim; clamp length.
   const cleaned = raw
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -135,12 +137,14 @@ export const decodeMap = (encoded: string): DecodedShare => {
   const versionStr = lines[0];
   const version = Number(versionStr);
   if (!Number.isInteger(version) || version < 1) {
-    throw new InvalidShareLinkError(`Unsupported share version: "${versionStr}".`);
+    throw new InvalidShareLinkError(
+      `Unsupported share version: "${versionStr}".`,
+    );
   }
 
   if (version !== SHARE_FORMAT_VERSION) {
     throw new InvalidShareLinkError(
-      `Unsupported share version: ${version}. This app supports v${SHARE_FORMAT_VERSION}.`
+      `Unsupported share version: ${version}. This app supports v${SHARE_FORMAT_VERSION}.`,
     );
   }
 
@@ -157,7 +161,7 @@ export const decodeMap = (encoded: string): DecodedShare => {
 
 export const buildShareUrl = (
   origin: string,
-  payload: SharePayload
+  payload: SharePayload,
 ): string => {
   const encoded = encodeMap(payload);
   return `${origin.replace(/\/$/, "")}/m/${encoded}`;

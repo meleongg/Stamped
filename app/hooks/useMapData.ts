@@ -41,7 +41,7 @@ export const useMapData = ({
 
   const updateCountry = (
     countryCode: string,
-    updates: Partial<CountryEntry>
+    updates: Partial<CountryEntry>,
   ) => {
     setMapData((prev) => updateCountryEntry(prev, countryCode, updates));
   };
@@ -70,10 +70,13 @@ export const useMapData = ({
   };
 
   const getTotalCountsByStatus = () => {
-    return Object.values(mapData).reduce((acc, entry) => {
-      acc[entry.status] = (acc[entry.status] || 0) + 1;
-      return acc;
-    }, {} as Record<TravelStatus, number>);
+    return Object.values(mapData).reduce(
+      (acc, entry) => {
+        acc[entry.status] = (acc[entry.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<TravelStatus, number>,
+    );
   };
 
   return {

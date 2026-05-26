@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, Copy, Share2 } from "lucide-react";
 import { track } from "@vercel/analytics";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MapData } from "../types";
 import {
@@ -32,14 +32,15 @@ interface ShareDialogProps {
 
 export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
+  // Lazy init: read remembered name from localStorage once on first render.
+  // Safe on the server (returns "") because the dialog content lives in a
+  // Radix portal that isn't rendered until the user opens the dialog,
+  // which always happens client-side post-hydration.
+  const [name, setName] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(SHARE_NAME_STORAGE_KEY) ?? "";
+  });
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem(SHARE_NAME_STORAGE_KEY);
-    if (saved) setName(saved);
-  }, []);
 
   const trimmedName = sanitizeName(name);
   const canShare = isValidName(name) && Object.keys(mapData).length > 0;
@@ -106,7 +107,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
       <DialogTrigger asChild>
         <Button
           variant="default"
-          className="w-full flex items-center justify-center gap-2 cursor-pointer"
+          className="flex w-full cursor-pointer items-center justify-center gap-2"
           disabled={totalCountries === 0}
           title={
             totalCountries === 0
@@ -114,7 +115,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
               : "Share your map"
           }
         >
-          <Share2 className="w-4 h-4" />
+          <Share2 className="h-4 w-4" />
           Share my map
         </Button>
       </DialogTrigger>
@@ -131,7 +132,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
           <div className="flex flex-col gap-2">
             <Label htmlFor="share-name">
               Your name
-              <span className="text-red-500 ml-1">*</span>
+              <span className="ml-1 text-red-500">*</span>
             </Label>
             <Input
               id="share-name"
@@ -141,18 +142,18 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
               maxLength={SHARE_NAME_MAX}
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
-              Shown as &quot;{trimmedName || "Your name"}&apos;s travel map&quot;
-              on the share page.
+            <p className="text-muted-foreground text-xs">
+              Shown as &quot;{trimmedName || "Your name"}&apos;s travel
+              map&quot; on the share page.
             </p>
           </div>
 
           {totalCountries === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Add at least one country to your map first.
             </p>
           ) : !isValidName(name) ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Enter your name to generate a share link.
             </p>
           ) : (
@@ -175,9 +176,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
                     aria-label="Copy share link"
                   >
                     {copied ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="h-4 w-4" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="h-4 w-4" />
                     )}
                   </Button>
                 </div>
@@ -186,16 +187,16 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
               {ogPreviewSrc && (
                 <div className="flex flex-col gap-2">
                   <Label>Preview</Label>
-                  <div className="rounded-md border bg-muted overflow-hidden aspect-[1200/630]">
+                  <div className="bg-muted aspect-[1200/630] overflow-hidden rounded-md border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={ogPreviewSrc}
                       alt="Share preview"
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                       loading="lazy"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     This is the image friends will see in iMessage, Twitter,
                     Discord, etc.
                   </p>
@@ -205,9 +206,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
               <Button
                 onClick={handleShareNative}
                 variant="secondary"
-                className="w-full flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2"
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="h-4 w-4" />
                 Share via…
               </Button>
             </>

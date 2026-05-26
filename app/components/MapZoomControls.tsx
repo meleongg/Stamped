@@ -27,7 +27,7 @@ export const MapZoomControls: React.FC<MapZoomControlsProps> = ({
         aria-label="Zoom in"
         title="Zoom in"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="h-4 w-4" />
       </Button>
       <Button
         onClick={onZoomOut}
@@ -37,7 +37,7 @@ export const MapZoomControls: React.FC<MapZoomControlsProps> = ({
         aria-label="Zoom out"
         title="Zoom out"
       >
-        <Minus className="w-4 h-4" />
+        <Minus className="h-4 w-4" />
       </Button>
       <Button
         onClick={onReset}
@@ -47,7 +47,7 @@ export const MapZoomControls: React.FC<MapZoomControlsProps> = ({
         aria-label="Reset zoom"
         title="Reset zoom"
       >
-        <RotateCcw className="w-4 h-4" />
+        <RotateCcw className="h-4 w-4" />
       </Button>
     </div>
   );

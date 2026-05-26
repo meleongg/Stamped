@@ -31,7 +31,7 @@ export const loadCountries = (): CountryFeature[] => {
 
   const collection = feature(
     topology as unknown as Parameters<typeof feature>[0],
-    countriesObject as unknown as Parameters<typeof feature>[1]
+    countriesObject as unknown as Parameters<typeof feature>[1],
   ) as unknown as FeatureCollection<GeoJSON.Geometry, CountryProperties>;
 
   cached = collection.features.filter((country) => {

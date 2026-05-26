@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon, CheckIcon, XIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { CountryEntry, TravelStatus } from "../types";
@@ -21,7 +21,7 @@ interface NoteSidebarProps {
   countryData: CountryEntry | null;
   onUpdateCountry: (
     countryCode: string,
-    updates: Partial<CountryEntry>
+    updates: Partial<CountryEntry>,
   ) => void;
   onRemoveCountry: (countryCode: string) => void;
   onClose: () => void;
@@ -63,22 +63,17 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   onClose,
   isOpen,
 }) => {
-  const [notes, setNotes] = useState("");
-  const [visitedAt, setVisitedAt] = useState("");
-  const [status, setStatus] = useState<TravelStatus>("want_to_visit");
+  // Parent passes key={selectedCountry}, so this component is remounted on
+  // each country change. That means lazy state initializers correctly seed
+  // from `countryData` once per selection with no prop->state effect.
+  const [notes, setNotes] = useState<string>(() => countryData?.notes ?? "");
+  const [visitedAt, setVisitedAt] = useState<string>(
+    () => countryData?.visitedAt ?? "",
+  );
+  const [status, setStatus] = useState<TravelStatus>(
+    () => countryData?.status ?? "want_to_visit",
+  );
   const [dateOpen, setDateOpen] = useState(false);
-
-  useEffect(() => {
-    if (countryData) {
-      setNotes(countryData.notes || "");
-      setVisitedAt(countryData.visitedAt || "");
-      setStatus(countryData.status);
-    } else {
-      setNotes("");
-      setVisitedAt("");
-      setStatus("want_to_visit");
-    }
-  }, [countryData]);
 
   const handleSave = () => {
     if (!countryCode) return;
@@ -90,17 +85,13 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
     };
 
     onUpdateCountry(countryCode, updates);
-    toast.success(
-      `Saved · ${countryName || countryCode.toUpperCase()}`
-    );
+    toast.success(`Saved · ${countryName || countryCode.toUpperCase()}`);
   };
 
   const handleRemove = () => {
     if (!countryCode) return;
     onRemoveCountry(countryCode);
-    toast.success(
-      `Removed · ${countryName || countryCode.toUpperCase()}`
-    );
+    toast.success(`Removed · ${countryName || countryCode.toUpperCase()}`);
   };
 
   const handleStatusChange = (newStatus: TravelStatus) => {
@@ -129,22 +120,22 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const displayName = countryName || countryCode.toUpperCase();
 
   return (
-    <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-xl border-l border-gray-200 dark:border-gray-700 z-50 overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 z-50 w-80 overflow-y-auto border-l border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h2
-            className="text-xl font-bold text-gray-900 dark:text-white truncate"
+            className="truncate text-xl font-bold text-gray-900 dark:text-white"
             title={displayName}
           >
             {displayName}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center justify-center cursor-pointer"
+            className="flex cursor-pointer items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             aria-label="Close sidebar"
           >
-            <XIcon className="w-5 h-5" />
+            <XIcon className="h-5 w-5" />
           </button>
         </div>
 
@@ -161,28 +152,21 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                   key={statusKey}
                   type="button"
                   onClick={() => handleStatusChange(statusValue)}
-                  className={`group relative flex items-center gap-3 w-full h-11 px-3 rounded-md border-2 text-sm font-medium transition-colors cursor-pointer ${
+                  className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
                     isSelected
-                      ? "bg-gray-50 dark:bg-gray-900/40 text-gray-900 dark:text-white"
-                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30"
+                      ? "bg-gray-50 text-gray-900 dark:bg-gray-900/40 dark:text-white"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900/30"
                   }`}
-                  style={
-                    isSelected
-                      ? { borderColor: color }
-                      : undefined
-                  }
+                  style={isSelected ? { borderColor: color } : undefined}
                   aria-pressed={isSelected}
                 >
                   <span
-                    className="w-3 h-3 rounded-full shrink-0"
+                    className="h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="flex-1 text-left truncate">{label}</span>
+                  <span className="flex-1 truncate text-left">{label}</span>
                   {isSelected && (
-                    <CheckIcon
-                      className="w-4 h-4 shrink-0"
-                      style={{ color }}
-                    />
+                    <CheckIcon className="h-4 w-4 shrink-0" style={{ color }} />
                   )}
                 </button>
               );
@@ -198,15 +182,13 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`w-full justify-start text-left font-normal h-10 cursor-pointer ${
+                  className={`h-10 w-full cursor-pointer justify-start text-left font-normal ${
                     visitedAt ? "" : "text-muted-foreground"
                   }`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
                   <span className="flex-1 truncate">
-                    {visitedAt
-                      ? formatDateDisplay(visitedAt)
-                      : "Pick a date"}
+                    {visitedAt ? formatDateDisplay(visitedAt) : "Pick a date"}
                   </span>
                   {visitedAt && (
                     <span
@@ -225,7 +207,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                           handleDateSelect(undefined);
                         }
                       }}
-                      className="ml-2 inline-flex items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground ml-2 inline-flex items-center justify-center rounded-sm p-0.5"
                     >
                       <XIcon className="h-3.5 w-3.5" />
                     </span>

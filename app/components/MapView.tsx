@@ -125,9 +125,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       // d3-zoom's default filter, restored: allow trackpad pinch (wheel +
       // ctrlKey) which the previous filter was incorrectly blocking on Mac.
       .filter((event) => {
-        return (
-          (!event.ctrlKey || event.type === "wheel") && !event.button
-        );
+        return (!event.ctrlKey || event.type === "wheel") && !event.button;
       })
       .on("start", (event) => {
         if (event.sourceEvent?.type === "mousedown") setIsPanning(true);
@@ -154,7 +152,10 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       .call(zoomBehaviorRef.current.scaleBy, factor);
   }, []);
 
-  const handleZoomIn = useCallback(() => animateZoomBy(ZOOM_STEP), [animateZoomBy]);
+  const handleZoomIn = useCallback(
+    () => animateZoomBy(ZOOM_STEP),
+    [animateZoomBy],
+  );
   const handleZoomOut = useCallback(
     () => animateZoomBy(1 / ZOOM_STEP),
     [animateZoomBy],
@@ -248,7 +249,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
 
   if (isLoading) {
     return (
-      <div className="w-full bg-blue-50 dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center aspect-[5/3] max-h-[600px]">
+      <div className="flex aspect-[5/3] max-h-[600px] w-full items-center justify-center overflow-hidden rounded-lg bg-blue-50 dark:bg-slate-900">
         <div className="text-gray-600 dark:text-gray-300">Loading map...</div>
       </div>
     );
@@ -257,7 +258,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-blue-50 dark:bg-slate-900 rounded-lg flex items-center justify-center aspect-[5/3] max-h-[600px]"
+      className="relative flex aspect-[5/3] max-h-[600px] w-full items-center justify-center rounded-lg bg-blue-50 dark:bg-slate-900"
       onPointerLeave={() => setTooltip(null)}
     >
       <MapZoomControls
@@ -272,7 +273,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
         viewBox={`0 0 ${MAP_DIMENSIONS.WIDTH} ${MAP_DIMENSIONS.HEIGHT}`}
         width="100%"
         height="100%"
-        className="w-full h-full"
+        className="h-full w-full"
         preserveAspectRatio="xMidYMid meet"
         style={{
           touchAction: "none",

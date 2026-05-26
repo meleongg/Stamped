@@ -14,8 +14,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
 
+  // Theme bootstrap must run client-only because it depends on window.matchMedia
+  // and localStorage. Avoiding the brief light->dark flash properly requires a
+  // blocking <script> in the document <head> (next-themes style); we accept the
+  // single-frame flash here as the simplest SSR-safe option.
   useEffect(() => {
-    // Check for saved theme in localStorage or system preference
     const savedTheme = localStorage.getItem("theme") as Theme;
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
       .matches
@@ -23,9 +26,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       : "light";
 
     const initialTheme = savedTheme || systemTheme;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(initialTheme);
 
-    // Apply theme to document
     if (initialTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {

@@ -2,13 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { STATUS_COLORS } from "../constants";
 import { TravelStatus } from "../types";
 import { CountryFeature } from "../utils/geo";
@@ -24,7 +18,10 @@ interface CountrySearchProps {
 const MAX_RESULTS = 8;
 
 const normalize = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
 export const CountrySearch: React.FC<CountrySearchProps> = ({
   countries,
@@ -90,10 +87,6 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
     return [...prefix, ...substring].slice(0, MAX_RESULTS);
   }, [query, sorted]);
 
-  useEffect(() => {
-    setHighlight(0);
-  }, [query]);
-
   const select = useCallback(
     (countryCode: string) => {
       onSelect(countryCode);
@@ -130,7 +123,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div className="relative">
         <Search
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+          className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-gray-400"
           aria-hidden
         />
         <Input
@@ -138,12 +131,13 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
+            setHighlight(0);
             setOpen(true);
           }}
           onFocus={() => query.trim() && setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="pl-8 pr-16"
+          className="pr-16 pl-8"
           aria-label="Search countries"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
@@ -156,13 +150,13 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="absolute right-9 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute top-1/2 right-9 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             aria-label="Clear search"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
-        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center rounded border bg-gray-50 dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-gray-500 dark:text-gray-300">
+        <kbd className="absolute top-1/2 right-2 hidden h-5 -translate-y-1/2 items-center rounded border bg-gray-50 px-1.5 font-mono text-[10px] font-medium text-gray-500 select-none sm:inline-flex dark:bg-gray-700 dark:text-gray-300">
           ⌘K
         </kbd>
       </div>
@@ -171,7 +165,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
         <ul
           id="country-search-listbox"
           role="listbox"
-          className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg"
+          className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
         >
           {results.length === 0 ? (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
@@ -194,12 +188,12 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
                   onMouseEnter={() => setHighlight(i)}
                   className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
                     active
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      ? "bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
                       : "text-gray-700 dark:text-gray-200"
                   }`}
                 >
                   <span
-                    className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{
                       backgroundColor: status
                         ? STATUS_COLORS[status]

@@ -61,7 +61,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
         size="sm"
         className={`${controlClass} flex items-center gap-2`}
       >
-        <Copy className="w-4 h-4" />
+        <Copy className="h-4 w-4" />
         Copy
       </Button>
       <Button
@@ -70,7 +70,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
         size="sm"
         className={`${controlClass} flex items-center gap-2`}
       >
-        <Download className="w-4 h-4" />
+        <Download className="h-4 w-4" />
         Export
       </Button>
     </div>
