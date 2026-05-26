@@ -9,11 +9,11 @@ import { computeStats } from "@/app/utils/stats";
 export const runtime = "nodejs";
 export const contentType = "image/png";
 export const size = { width: 1200, height: 630 };
-export const alt = "Travel map";
+export const alt = "Stamped travel map";
 
 const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 520;
-const HEADER_HEIGHT = 110;
+const HEADER_HEIGHT = 230;
+const MAP_HEIGHT = size.height - HEADER_HEIGHT;
 
 const STATUS_LABELS_SHORT: Record<TravelStatus, string> = {
   visited: "visited",
@@ -21,6 +21,8 @@ const STATUS_LABELS_SHORT: Record<TravelStatus, string> = {
   want_to_visit: "want to visit",
   avoid: "avoid",
 };
+
+const BRAND_HOST = "stamped-travel.vercel.app";
 
 interface RouteParams {
   data: string;
@@ -51,7 +53,6 @@ export default async function OpenGraphImage({
   }
 
   const stats = computeStats(mapData);
-
   const countries = loadCountries();
 
   const projection = geoNaturalEarth1()
@@ -67,13 +68,13 @@ export default async function OpenGraphImage({
       const code = String(country.id);
       const status = statusByCountry[code];
       const fill = status ? STATUS_COLORS[status] : "#e0e7ff";
-      return { d, fill, code };
+      return { d, fill };
     })
-    .filter(Boolean) as Array<{ d: string; fill: string; code: string }>;
+    .filter(Boolean) as Array<{ d: string; fill: string }>;
 
   const statsLine =
     stats.totalMarked === 0
-      ? "Track your travels on a world map"
+      ? "Mark the countries you've visited"
       : [
           `${stats.visitedCount} visited`,
           stats.visitedPercent > 0
@@ -103,51 +104,129 @@ export default async function OpenGraphImage({
         backgroundColor: "#ffffff",
       }}
     >
+      {/* Header band */}
       <div
         style={{
           height: HEADER_HEIGHT,
-          paddingLeft: 48,
-          paddingRight: 48,
+          paddingLeft: 56,
+          paddingRight: 56,
+          paddingTop: 32,
+          paddingBottom: 28,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: "space-between",
           backgroundColor: "#0f172a",
           color: "#ffffff",
         }}
       >
+        {/* Brand bar */}
         <div
           style={{
-            fontSize: 38,
-            fontWeight: 700,
-            lineHeight: 1.1,
             display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {name}&apos;s travel map
-        </div>
-        <div
-          style={{
-            fontSize: 20,
-            color: "#cbd5e1",
-            marginTop: 4,
-            display: "flex",
-          }}
-        >
-          {statsLine}
-        </div>
-        {subStatusLine && (
           <div
             style={{
-              fontSize: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                width: 52,
+                height: 52,
+                borderRadius: 10,
+                backgroundColor: "#ffffff",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg
+                width={28}
+                height={28}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0f172a"
+                strokeWidth={2.25}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13" />
+                <path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z" />
+                <path d="M5 22h14" />
+              </svg>
+            </div>
+            <div
+              style={{
+                fontSize: 36,
+                fontWeight: 700,
+                letterSpacing: -0.5,
+                display: "flex",
+              }}
+            >
+              Stamped
+            </div>
+          </div>
+          <div
+            style={{
+              fontSize: 18,
               color: "#94a3b8",
-              marginTop: 2,
               display: "flex",
             }}
           >
-            {subStatusLine}
+            {BRAND_HOST}
           </div>
-        )}
+        </div>
+
+        {/* Hero name + stats */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div
+            style={{
+              fontSize: 54,
+              fontWeight: 700,
+              lineHeight: 1.05,
+              letterSpacing: -0.5,
+              display: "flex",
+            }}
+          >
+            {name}&apos;s travel map
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 22,
+                color: "#cbd5e1",
+                display: "flex",
+              }}
+            >
+              {statsLine}
+            </div>
+            {subStatusLine && (
+              <div
+                style={{
+                  fontSize: 18,
+                  color: "#64748b",
+                  display: "flex",
+                }}
+              >
+                {subStatusLine}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Map */}
       <div
         style={{
           position: "relative",

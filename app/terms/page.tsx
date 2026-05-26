@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+const LAST_UPDATED = "May 26, 2026";
+
 export default function TermsOfService() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -22,25 +24,24 @@ export default function TermsOfService() {
       <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="prose dark:prose-invert max-w-none">
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            <strong>Last updated:</strong> {new Date().toLocaleDateString()}
+            <strong>Last updated:</strong> {LAST_UPDATED}
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Acceptance of Terms
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            By using Personal World Map, you agree to these Terms of Service. If
-            you do not agree with these terms, please do not use the
-            application.
+            By using Stamped, you agree to these Terms of Service. If you do not
+            agree with these terms, please do not use the application.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Description of Service
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            Personal World Map is a free, client-side web application that
-            allows users to track their travel history and plan future trips by
-            marking countries on an interactive world map. All data is stored
+            Stamped is a free, client-side web application that allows users to
+            track their travel history and plan future trips by marking
+            countries on an interactive world map. All map data is stored
             locally in your browser.
           </p>
 
@@ -61,13 +62,31 @@ export default function TermsOfService() {
           </ul>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+            Sharing and Share Links
+          </h2>
+          <p className="mb-4 text-gray-700 dark:text-gray-300">
+            When you generate a share link, the display name you chose and the
+            list of countries with their statuses are encoded into the URL.
+            Anyone with the link can view that information. You are responsible
+            for the content of share links you generate and for who you share
+            them with. Notes and visit dates are never included in share links.
+          </p>
+
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Data and Privacy
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            All your data is stored locally in your browser. We do not have
+            All your map data is stored locally in your browser. We do not have
             access to your personal travel data. You are responsible for backing
             up your data if desired, as clearing your browser data will remove
-            your travel information.
+            your travel information. See our{" "}
+            <Link
+              href="/privacy"
+              className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Privacy Policy
+            </Link>{" "}
+            for details on third-party services we use.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -83,9 +102,9 @@ export default function TermsOfService() {
             Limitation of Liability
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            In no event shall Personal World Map be liable for any indirect,
-            incidental, special, or consequential damages arising from your use
-            of the service.
+            In no event shall Stamped be liable for any indirect, incidental,
+            special, or consequential damages arising from your use of the
+            service.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -94,7 +113,7 @@ export default function TermsOfService() {
           <p className="mb-4 text-gray-700 dark:text-gray-300">
             The map data is provided by third-party sources. We are not
             responsible for the accuracy or completeness of geographic
-            information.
+            information, including country boundaries and naming.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">

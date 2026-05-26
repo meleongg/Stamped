@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+const LAST_UPDATED = "May 26, 2026";
+
 export default function PrivacyPolicy() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -22,32 +24,51 @@ export default function PrivacyPolicy() {
       <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
         <div className="prose dark:prose-invert max-w-none">
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            <strong>Last updated:</strong> {new Date().toLocaleDateString()}
+            <strong>Last updated:</strong> {LAST_UPDATED}
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Data Collection and Storage
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            Personal World Map is a client-side application that stores all data
-            locally in your browser. We do not collect, transmit, or store any
-            personal information on external servers.
+            Stamped is a client-side application. Your travel data is stored
+            locally in your browser and is not transmitted to or stored on any
+            of our servers.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Local Storage
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            Your travel data, including country statuses, notes, and visit
-            dates, is stored locally in your browser&apos;s localStorage. This
-            data:
+            Your travel data — country statuses, notes, and visit dates — is
+            stored in your browser&apos;s <code>localStorage</code>. This data:
           </p>
           <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
             <li>Remains on your device only</li>
-            <li>Is not transmitted to any external servers</li>
-            <li>Can be cleared by clearing your browser data</li>
+            <li>Is not transmitted to any external servers by Stamped</li>
+            <li>Can be cleared at any time by clearing your browser data</li>
             <li>Is not accessible to other websites</li>
           </ul>
+
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+            Share Links
+          </h2>
+          <p className="mb-4 text-gray-700 dark:text-gray-300">
+            When you generate a share link, the following information is encoded
+            into the URL itself (and therefore visible to anyone you send the
+            link to):
+          </p>
+          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
+            <li>The display name you chose for the share</li>
+            <li>
+              The list of countries you&apos;ve marked, with their statuses
+              (visited / planning / want to visit / avoid)
+            </li>
+          </ul>
+          <p className="mb-4 text-gray-700 dark:text-gray-300">
+            Your <strong>notes and visit dates are never included</strong> in
+            share links. They stay on your device.
+          </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Third-Party Services
@@ -57,30 +78,34 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
             <li>
-              <strong>World Atlas CDN:</strong> For loading geographic map data
-              (countries-110m.json)
-            </li>
-            <li>
-              <strong>Vercel (if hosted):</strong> For website hosting and
+              <strong>Vercel</strong> — hosting, deployment, and bandwidth
               delivery
             </li>
+            <li>
+              <strong>Vercel Analytics</strong> — privacy-friendly, cookie-less
+              aggregate analytics. It records anonymized page views and a small
+              number of custom events (such as &quot;share link copied&quot;)
+              for product analytics. It does not collect personally identifiable
+              information and does not use cross-site tracking. See{" "}
+              <a
+                href="https://vercel.com/docs/analytics/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                Vercel&apos;s analytics privacy policy
+              </a>{" "}
+              for details.
+            </li>
           </ul>
-
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-            Analytics and Tracking
-          </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
-            We do not use any analytics, tracking, or monitoring services. No
-            user behavior data is collected.
-          </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Data Security
           </h2>
           <p className="mb-4 text-gray-700 dark:text-gray-300">
-            Since all data is stored locally in your browser, the security of
-            your data depends on your device&apos;s security measures. We
-            recommend keeping your browser and device updated.
+            Since all map data is stored locally in your browser, the security
+            of that data depends on your device&apos;s security. We recommend
+            keeping your browser and device updated.
           </p>
 
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
