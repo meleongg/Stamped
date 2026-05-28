@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { CountrySearch } from "@/app/components/CountrySearch";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
@@ -10,6 +9,7 @@ import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { computeStats } from "@/app/utils/stats";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Home() {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
@@ -118,8 +118,10 @@ export default function Home() {
               <li>• Tap or search for a country to select it</li>
               <li>• Click again to cycle through statuses</li>
               <li>• Add notes and visit dates in the sidebar</li>
-              <li>• Your map is automatically saved in your browser</li>
-              <li>• Share your map using the button below the map</li>
+              <li>
+                • Stored on this device only. Share below the map to send a link
+                to your phone or friends.
+              </li>
             </ul>
           </div>
         </div>
