@@ -67,7 +67,7 @@ export default async function OpenGraphImage({
       if (!d) return null;
       const code = String(country.id);
       const status = statusByCountry[code];
-      const fill = status ? STATUS_COLORS[status] : "#e0e7ff";
+      const fill = status ? STATUS_COLORS[status] : "#94a3b8";
       return { d, fill };
     })
     .filter(Boolean) as Array<{ d: string; fill: string }>;
@@ -234,7 +234,7 @@ export default async function OpenGraphImage({
           width: MAP_WIDTH,
           height: MAP_HEIGHT,
           display: "flex",
-          backgroundColor: "#dbeafe",
+          backgroundColor: "#bfdbfe",
         }}
       >
         <svg

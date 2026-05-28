@@ -24,7 +24,7 @@ const CATEGORY_COLORS: Record<OverlayCategory, string> = {
   both: "#22c55e", // green
   onlyMine: "#3b82f6", // blue
   onlyTheirs: "#f59e0b", // amber
-  neither: "#e0e7ff", // light fill
+  neither: "#94a3b8", // slate-400 — unmarked / neither (matches light map)
 };
 
 const CATEGORY_LABELS: Record<OverlayCategory, string> = {

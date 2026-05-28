@@ -249,7 +249,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
 
   if (isLoading) {
     return (
-      <div className="flex aspect-[5/3] max-h-[600px] w-full items-center justify-center overflow-hidden rounded-lg bg-blue-50 dark:bg-slate-900">
+      <div className="flex aspect-[5/3] max-h-[600px] w-full items-center justify-center overflow-hidden rounded-lg bg-blue-200 dark:bg-slate-900">
         <div className="text-gray-600 dark:text-gray-300">Loading map...</div>
       </div>
     );
@@ -258,7 +258,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   return (
     <div
       ref={containerRef}
-      className="relative flex aspect-[5/3] max-h-[600px] w-full items-center justify-center rounded-lg bg-blue-50 dark:bg-slate-900"
+      className="relative flex aspect-[5/3] max-h-[600px] w-full items-center justify-center rounded-lg bg-blue-200 dark:bg-slate-900"
       onPointerLeave={() => setTooltip(null)}
     >
       <MapZoomControls
@@ -308,7 +308,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                 : theme === "dark"
                   ? MAPVIEW_COLORS.borderStrokeDark
                   : MAPVIEW_COLORS.borderStroke;
-            const strokeWidth = isSelected ? "3" : isHovered ? "1" : "0";
+            const strokeWidth = isSelected ? "3" : isHovered ? "1" : "0.4";
             return (
               <path
                 key={countryCode}

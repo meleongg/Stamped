@@ -26,23 +26,24 @@ export const ACTIVE_STATUSES: TravelStatus[] = [
 export const STATUS_CYCLE: TravelStatus[] = ACTIVE_STATUSES;
 
 // MapView-specific colors.
-// Dark-mode unvisited fill is now LIGHTER than the ocean background so
-// landmasses pop out, instead of disappearing into the dark map container.
-// hoverStrokeDark moved to blue-300 so it doesn't collide with the
-// want_to_visit fill (both were blue-500 previously, making hover invisible).
+// Light mode: medium slate land on blue-200 ocean (high luminance contrast).
+// Unvisited paths use a 0.4px border so coastlines and neighbors stay visible.
+// Dark mode: slate-600 land on slate-900 ocean; borders slate-400 for clearer edges.
 export const MAPVIEW_COLORS = {
-  unvisitedFill: "#e0e7ff", // Light blue for unvisited countries
-  unvisitedFillDark: "#475569", // slate-600 — readable on slate-900 ocean
-  hoverFill: "#cbd5e1", // Subtle gray-blue for hover
-  hoverFillDark: "#64748b", // slate-500 — one step lighter than fill
+  oceanLight: "#bfdbfe", // blue-200 — water (light mode)
+  oceanDark: "#0f172a", // slate-900 — water (dark mode)
+  unvisitedFill: "#94a3b8", // slate-400 — unvisited land (light mode)
+  unvisitedFillDark: "#475569", // slate-600 — unvisited land (dark mode)
+  hoverFill: "#cbd5e1", // slate-300 — hover on unvisited land (light mode)
+  hoverFillDark: "#64748b", // slate-500 — hover on unvisited land (dark mode)
   visitedHover: "#16a34a", // green-600
   planningHover: "#ca8a04", // yellow-600 (same hue as new base)
   wantToVisitHover: "#2563eb", // blue-600
   avoidHover: "#b91c1c", // red-700
-  selectedStroke: "#1e293b", // Even darker for selected country
-  selectedStrokeDark: "#f1f5f9", // Light stroke for dark mode
-  borderStroke: "#334155", // Medium-dark for borders
-  borderStrokeDark: "#94a3b8", // slate-400 — more visible between countries
+  selectedStroke: "#1e293b", // selected country (light mode)
+  selectedStrokeDark: "#f1f5f9", // selected country (dark mode)
+  borderStroke: "#475569", // slate-600 — country edges (light mode)
+  borderStrokeDark: "#94a3b8", // slate-400 — lighter edges on slate-600 land (dark mode)
   hoverStroke: "#1e40af", // Blue for hover
   hoverStrokeDark: "#93c5fd", // blue-300 — readable against all status fills
 } as const;
