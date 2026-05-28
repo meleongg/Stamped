@@ -78,6 +78,33 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
             <li>
+              <strong>
+                <a
+                  href="https://www.naturalearthdata.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Natural Earth
+                </a>
+              </strong>{" "}
+              — country boundary and name data (Admin 0 countries), bundled for
+              map display
+            </li>
+            <li>
+              <strong>
+                <a
+                  href="https://github.com/topojson/world-atlas"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  world-atlas
+                </a>
+              </strong>{" "}
+              — TopoJSON packaging of Natural Earth data (ISC License)
+            </li>
+            <li>
               <strong>Vercel</strong> — hosting, deployment, and bandwidth
               delivery
             </li>

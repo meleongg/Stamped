@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { MapDataAttribution } from "@/app/components/MapDataAttribution";
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="mt-auto border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
+      <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="text-sm text-gray-600 dark:text-gray-300">
             © {currentYear} Stamped. All rights reserved.
           </div>
@@ -27,6 +28,7 @@ export const Footer: React.FC = () => {
             </Link>
           </div>
         </div>
+        <MapDataAttribution className="max-w-3xl" />
       </div>
     </footer>
   );

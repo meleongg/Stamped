@@ -73,5 +73,7 @@ public/              Static assets + bundled TopoJSON world data
 
 ## Attribution
 
-- World map data from [world-atlas](https://github.com/topojson/world-atlas), ISC License © 2013-2019 Michael Bostock
+- Country boundaries and names from [Natural Earth](https://www.naturalearthdata.com/) (Admin 0 – Countries), packaged as TopoJSON via [world-atlas](https://github.com/topojson/world-atlas) (ISC License © 2013-2019 Michael Bostock)
 - Icons from [Lucide](https://lucide.dev), ISC License
+
+Map boundaries and labels reflect Natural Earth’s cartographic choices, not a political position by Stamped.
