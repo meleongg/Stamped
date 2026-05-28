@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CountrySearch } from "@/app/components/CountrySearch";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
@@ -31,6 +31,36 @@ export default function Home() {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
 
   const stats = useMemo(() => computeStats(mapData), [mapData]);
+
+  const selectedStatus = selectedCountry
+    ? getCountryStatus(selectedCountry)
+    : null;
+
+  useEffect(() => {
+    if (!selectedCountry) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedCountry(null);
+      }
+    };
+
+    // Close when clicking outside sidebar + map (legend/stats/header area).
+    // No full-screen backdrop — it blocked map clicks for status cycling.
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (document.getElementById("note-sidebar")?.contains(target)) return;
+      if (document.getElementById("map-workspace")?.contains(target)) return;
+      setSelectedCountry(null);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [selectedCountry, setSelectedCountry]);
 
   const handleCountryHover = (countryCode: string | null) => {
     setHoveredCountry(countryCode);
@@ -70,6 +100,10 @@ export default function Home() {
         ?.properties.name || selectedCountry.toUpperCase()
     : null;
 
+  const sidebarKey = selectedCountry
+    ? `${selectedCountry}-${selectedStatus ?? "new"}`
+    : "none";
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
@@ -85,12 +119,11 @@ export default function Home() {
               <li>• Click again to cycle through statuses</li>
               <li>• Add notes and visit dates in the sidebar</li>
               <li>• Your map is automatically saved in your browser</li>
-              <li>• Use the Share button to send a link to a friend</li>
+              <li>• Share your map using the button below the map</li>
             </ul>
           </div>
-          <ShareDialog mapData={mapData} />
         </div>
-        <div className="flex flex-col gap-3 lg:col-span-3">
+        <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
@@ -110,10 +143,15 @@ export default function Home() {
               />
             </div>
           </div>
+          <div className="mx-auto flex w-full max-w-4xl justify-center">
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <ShareDialog mapData={mapData} />
+            </div>
+          </div>
         </div>
       </div>
       <NoteSidebar
-        key={selectedCountry ?? "none"}
+        key={sidebarKey}
         countryCode={selectedCountry}
         countryName={selectedCountryName}
         countryData={selectedCountry ? getCountryData(selectedCountry) : null}

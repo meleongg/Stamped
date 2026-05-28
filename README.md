@@ -1,12 +1,10 @@
 # Stamped
 
-> Your travels, stamped.
-
 A personal world travel map. Mark the countries you've been to, share your map with a link, and compare it side-by-side with a friend's. No login, no backend — your data stays in your browser.
 
 ## Features
 
-- Click countries to mark them **visited / planning / want-to-visit / avoid**
+- Click countries to mark them **visited / planning / want-to-visit**
 - Per-country **notes and visit dates** in a side panel
 - **Shareable links** with server-rendered OG image previews for iMessage, Twitter, Discord, etc.
 - **Side-by-side comparison** with a friend's map (overlap, gaps, "add their places to my list")

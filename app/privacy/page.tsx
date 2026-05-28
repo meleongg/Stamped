@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
             <li>The display name you chose for the share</li>
             <li>
               The list of countries you&apos;ve marked, with their statuses
-              (visited / planning / want to visit / avoid)
+              (visited / planning / want to visit)
             </li>
           </ul>
           <p className="mb-4 text-gray-700 dark:text-gray-300">

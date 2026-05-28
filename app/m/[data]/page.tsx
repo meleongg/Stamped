@@ -14,12 +14,7 @@ interface PageProps {
   params: Promise<PageParams>;
 }
 
-const statusOrder: TravelStatus[] = [
-  "visited",
-  "planning",
-  "want_to_visit",
-  "avoid",
-];
+const statusOrder: TravelStatus[] = ["visited", "planning", "want_to_visit"];
 
 export async function generateMetadata({
   params,

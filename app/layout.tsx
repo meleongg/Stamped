@@ -1,7 +1,7 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { Stamp } from "lucide-react";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { Footer } from "./components/Footer";
@@ -81,9 +81,6 @@ export default function RootLayout({
                       <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
                         Stamped
                       </h1>
-                      <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
-                        Your travels, stamped
-                      </p>
                     </span>
                   </Link>
                   <ThemeToggle />

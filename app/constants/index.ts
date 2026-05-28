@@ -16,12 +16,14 @@ export const STATUS_LABELS = {
   avoid: "Avoid",
 } as const;
 
-export const STATUS_CYCLE: TravelStatus[] = [
+/** Statuses users can pick or cycle into in the editor UI. */
+export const ACTIVE_STATUSES: TravelStatus[] = [
   "visited",
   "planning",
   "want_to_visit",
-  "avoid",
 ];
+
+export const STATUS_CYCLE: TravelStatus[] = ACTIVE_STATUSES;
 
 // MapView-specific colors.
 // Dark-mode unvisited fill is now LIGHTER than the ocean background so

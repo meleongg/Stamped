@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { STATUS_COLORS, STATUS_LABELS } from "../constants";
+import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { TravelStatus } from "../types";
 
 interface LegendProps {
@@ -18,8 +18,9 @@ export const Legend: React.FC<LegendProps> = ({ counts }) => {
         </h3>
       </CardHeader>
       <CardContent className="space-y-2">
-        {Object.entries(STATUS_COLORS).map(([status, color]) => {
-          const count = counts[status as TravelStatus] || 0;
+        {ACTIVE_STATUSES.map((status) => {
+          const color = STATUS_COLORS[status];
+          const count = counts[status] || 0;
           return (
             <div key={status} className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -28,7 +29,7 @@ export const Legend: React.FC<LegendProps> = ({ counts }) => {
                   style={{ backgroundColor: color }}
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  {STATUS_LABELS[status as TravelStatus]}
+                  {STATUS_LABELS[status]}
                 </span>
               </div>
               <Badge

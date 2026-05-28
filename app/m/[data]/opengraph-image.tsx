@@ -90,6 +90,7 @@ export default async function OpenGraphImage({
   const subStatusLine = (
     ["planning", "want_to_visit", "avoid"] as TravelStatus[]
   )
+    .filter((s) => s !== "avoid" || (stats.byStatus.avoid || 0) > 0)
     .filter((s) => (stats.byStatus[s] || 0) > 0)
     .map((s) => `${stats.byStatus[s]} ${STATUS_LABELS_SHORT[s]}`)
     .join("  ·  ");

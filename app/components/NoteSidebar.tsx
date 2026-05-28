@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon, CheckIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { STATUS_COLORS, STATUS_LABELS } from "../constants";
+import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { CountryEntry, TravelStatus } from "../types";
 
 interface NoteSidebarProps {
@@ -70,28 +70,34 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const [visitedAt, setVisitedAt] = useState<string>(
     () => countryData?.visitedAt ?? "",
   );
-  const [status, setStatus] = useState<TravelStatus>(
-    () => countryData?.status ?? "want_to_visit",
+  const [status, setStatus] = useState<TravelStatus | null>(
+    () => countryData?.status ?? null,
   );
   const [dateOpen, setDateOpen] = useState(false);
 
   const handleSave = () => {
     if (!countryCode) return;
 
-    const updates: Partial<CountryEntry> = {
-      status,
+    const effectiveStatus = status ?? countryData?.status;
+    if (!effectiveStatus) {
+      toast.message("Pick a travel status to save this country");
+      return;
+    }
+
+    onUpdateCountry(countryCode, {
+      status: effectiveStatus,
       notes: notes.trim() || undefined,
       visitedAt: visitedAt || undefined,
-    };
-
-    onUpdateCountry(countryCode, updates);
+    });
     toast.success(`Saved · ${countryName || countryCode.toUpperCase()}`);
   };
 
   const handleRemove = () => {
     if (!countryCode) return;
     onRemoveCountry(countryCode);
-    toast.success(`Removed · ${countryName || countryCode.toUpperCase()}`);
+    toast.success(
+      `Cleared status · ${countryName || countryCode.toUpperCase()}`,
+    );
   };
 
   const handleStatusChange = (newStatus: TravelStatus) => {
@@ -120,7 +126,10 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const displayName = countryName || countryCode.toUpperCase();
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-80 overflow-y-auto border-l border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+    <div
+      id="note-sidebar"
+      className="fixed inset-y-0 right-0 z-50 w-80 overflow-y-auto border-l border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800"
+    >
       <div className="p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -142,14 +151,19 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
         {/* Status Selection - single column, full width */}
         <div className="mb-6">
           <Label className="mb-3">Travel Status</Label>
+          {!countryData && status === null && (
+            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+              Pick a status below, or click the country on the map to cycle.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
-            {Object.entries(STATUS_LABELS).map(([statusKey, label]) => {
-              const statusValue = statusKey as TravelStatus;
+            {ACTIVE_STATUSES.map((statusValue) => {
+              const label = STATUS_LABELS[statusValue];
               const isSelected = status === statusValue;
               const color = STATUS_COLORS[statusValue];
               return (
                 <button
-                  key={statusKey}
+                  key={statusValue}
                   type="button"
                   onClick={() => handleStatusChange(statusValue)}
                   className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
@@ -263,7 +277,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               className="w-full cursor-pointer"
               variant="destructive"
             >
-              Remove from Map
+              Clear marked status
             </Button>
           )}
         </div>

@@ -308,7 +308,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                 : theme === "dark"
                   ? MAPVIEW_COLORS.borderStrokeDark
                   : MAPVIEW_COLORS.borderStroke;
-            const strokeWidth = String(isSelected || isHovered ? 2 : 0.5);
+            const strokeWidth = isSelected ? "3" : isHovered ? "1" : "0";
             return (
               <path
                 key={countryCode}
