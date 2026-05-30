@@ -1,21 +1,24 @@
 {
-  "name": "Stamped",
+  "name": "Stamped — Personal World Travel Map",
   "short_name": "Stamped",
+  "description": "Mark the countries you've visited, share your map, and compare with friends.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f9ff",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
-  ],
-  "theme_color": "#0f172a",
-  "background_color": "#f0f9ff",
-  "display": "standalone"
+  ]
 }

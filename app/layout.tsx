@@ -1,9 +1,9 @@
 import { Analytics } from "@vercel/analytics/react";
-import { Stamp } from "lucide-react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import Link from "next/link";
 import { Toaster } from "sonner";
+import { AppLogo } from "./components/AppLogo";
 import { Footer } from "./components/Footer";
 import { JsonLd, webApplicationLd } from "./components/JsonLd";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -39,6 +39,19 @@ export const metadata: Metadata = {
     "Stamped is a personal world travel map. Mark the countries you've visited, share your map with friends, and compare your travels side-by-side. No login required.",
   applicationName: "Stamped",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Stamped",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icon0.svg", type: "image/svg+xml" },
+      { url: "/icon1.png", type: "image/png", sizes: "96x96" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     type: "website",
     siteName: "Stamped",
@@ -56,7 +69,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0284c7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({
@@ -80,9 +96,7 @@ export default function RootLayout({
                     aria-label="Stamped home"
                     className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:focus-visible:ring-sky-400"
                   >
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-sky-600 text-white shadow-sm transition-transform duration-200 group-hover:-rotate-6 dark:bg-sky-400 dark:text-slate-900">
-                      <Stamp className="h-5 w-5" strokeWidth={2.25} />
-                    </span>
+                    <AppLogo />
                     <span className="leading-tight">
                       <h1 className="font-wordmark text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
                         Stamped
