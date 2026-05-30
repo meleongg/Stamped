@@ -1,7 +1,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import { Stamp } from "lucide-react";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { Footer } from "./components/Footer";
@@ -18,6 +18,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 const SITE_URL =
@@ -61,24 +67,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
       >
         <JsonLd data={webApplicationLd(SITE_URL)} />
         <ThemeProvider>
-          <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-            <header className="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="bg-background flex min-h-screen flex-col">
+            <header className="bg-card border-border border-b shadow-sm">
               <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between gap-4">
                   <Link
                     href="/"
                     aria-label="Stamped home"
-                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white"
+                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:focus-visible:ring-sky-400"
                   >
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-900 text-white shadow-sm transition-transform duration-200 group-hover:-rotate-6 dark:bg-white dark:text-slate-900">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-sky-600 text-white shadow-sm transition-transform duration-200 group-hover:-rotate-6 dark:bg-sky-400 dark:text-slate-900">
                       <Stamp className="h-5 w-5" strokeWidth={2.25} />
                     </span>
                     <span className="leading-tight">
-                      <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
+                      <h1 className="font-wordmark text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
                         Stamped
                       </h1>
                     </span>

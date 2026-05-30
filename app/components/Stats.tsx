@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapStats } from "@/app/utils/stats";
 
 interface StatsProps {
@@ -31,53 +31,45 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
       : null;
 
   return (
-    <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <CardHeader className="pb-2">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-          Stats
-        </h3>
+    <Card className="border-border bg-card gap-0 p-4 shadow-md">
+      <CardHeader className="px-0 pb-2">
+        <CardTitle className="text-lg">Stats</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 px-0 pt-0">
         <div>
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              World visited
-            </span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-muted-foreground text-sm">World visited</span>
+            <span className="text-foreground text-sm font-semibold">
               {visitedPercent}%
             </span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+          <div className="bg-muted mt-1 h-1.5 w-full overflow-hidden rounded-full">
             <div
               className="h-full rounded-full bg-green-500"
               style={{ width: `${Math.min(100, visitedPercent)}%` }}
             />
           </div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted-foreground mt-1 text-xs">
             {visitedCount} of {totalCountriesInWorld} countries
           </div>
         </div>
 
         <div className="flex items-baseline justify-between">
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Continents
-          </span>
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <span className="text-muted-foreground text-sm">Continents</span>
+          <span className="text-foreground text-sm font-semibold">
             {continentsCount} / {totalContinents}
           </span>
         </div>
         {continentsCovered.length > 0 && (
-          <div className="-mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted-foreground -mt-2 text-xs">
             {continentsCovered.join(" · ")}
           </div>
         )}
 
         {yearLine && (
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              Visits
-            </span>
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-muted-foreground text-sm">Visits</span>
+            <span className="text-foreground text-sm font-semibold">
               {yearLine}
             </span>
           </div>

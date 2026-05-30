@@ -109,7 +109,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
           <Legend counts={counts} />
           <Stats stats={stats} />
 
-          <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-border bg-card flex flex-col gap-2 rounded-lg border p-4 shadow-md">
             <Button
               onClick={handleCopyLink}
               variant="outline"
@@ -201,7 +201,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
             onSelect={handleSearchSelect}
             placeholder={`Search ${ownerName}'s countries...`}
           />
-          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
               <MapView
                 ref={mapRef}

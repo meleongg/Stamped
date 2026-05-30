@@ -118,7 +118,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
 
   if (mineLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-gray-600 dark:text-gray-300">
+      <div className="text-muted-foreground flex min-h-[40vh] items-center justify-center">
         Loading your map…
       </div>
     );
@@ -128,10 +128,10 @@ export const CompareView: React.FC<CompareViewProps> = ({
     <>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-foreground text-3xl font-bold">
             You vs {theirName}
           </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground mt-1 text-sm">
             Visited-country overlap. Plans and want-to-visit aren&apos;t counted
             here.
           </p>
@@ -146,11 +146,9 @@ export const CompareView: React.FC<CompareViewProps> = ({
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1">
-          <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <Card className="border-border bg-card p-4">
             <CardHeader className="pb-2">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Overlap
-              </h3>
+              <h3 className="text-foreground text-lg font-semibold">Overlap</h3>
             </CardHeader>
             <CardContent className="space-y-2">
               {(["both", "onlyMine", "onlyTheirs"] as OverlayCategory[]).map(
@@ -161,7 +159,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
                         className="h-4 w-4 rounded-full"
                         style={{ backgroundColor: CATEGORY_COLORS[cat] }}
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-muted-foreground text-sm">
                         {cat === "onlyMine"
                           ? "Only me"
                           : cat === "onlyTheirs"
@@ -169,12 +167,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
                             : CATEGORY_LABELS[cat]}
                       </span>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                    >
-                      {stats[cat]}
-                    </Badge>
+                    <Badge variant="secondary">{stats[cat]}</Badge>
                   </div>
                 ),
               )}
@@ -182,14 +175,14 @@ export const CompareView: React.FC<CompareViewProps> = ({
           </Card>
 
           {uniqueToThem.length > 0 && (
-            <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+            <Card className="border-border bg-card p-4">
               <CardHeader className="pb-2">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                <h3 className="text-foreground text-lg font-semibold">
                   Explore together
                 </h3>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-muted-foreground text-sm">
                   {theirName} has been to {uniqueToThem.length}{" "}
                   {uniqueToThem.length === 1 ? "country" : "countries"} you
                   haven&apos;t. Add them to your &quot;want to visit&quot; list?
@@ -207,7 +200,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
         </div>
 
         <div className="flex items-center justify-center lg:col-span-3">
-          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
               <MapView
                 getCountryStatus={() => null}

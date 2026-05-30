@@ -9,8 +9,7 @@ interface MapZoomControlsProps {
   onReset: () => void;
 }
 
-const controlClass =
-  "bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-md cursor-pointer";
+const controlClass = "bg-card/90 hover:bg-card shadow-md cursor-pointer";
 
 export const MapZoomControls: React.FC<MapZoomControlsProps> = ({
   onZoomIn,

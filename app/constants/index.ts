@@ -26,11 +26,11 @@ export const ACTIVE_STATUSES: TravelStatus[] = [
 export const STATUS_CYCLE: TravelStatus[] = ACTIVE_STATUSES;
 
 // MapView-specific colors.
-// Light mode: medium slate land on blue-200 ocean (high luminance contrast).
+// Light mode: medium slate land on sky-100 ocean (Ocean Travel palette).
 // Unvisited paths use a 0.4px border so coastlines and neighbors stay visible.
 // Dark mode: slate-600 land on slate-900 ocean; borders slate-400 for clearer edges.
 export const MAPVIEW_COLORS = {
-  oceanLight: "#bfdbfe", // blue-200 — water (light mode)
+  oceanLight: "#e0f2fe", // sky-100 — water (light mode)
   oceanDark: "#0f172a", // slate-900 — water (dark mode)
   unvisitedFill: "#94a3b8", // slate-400 — unvisited land (light mode)
   unvisitedFillDark: "#475569", // slate-600 — unvisited land (dark mode)

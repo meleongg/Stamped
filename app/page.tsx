@@ -1,6 +1,7 @@
 "use client";
 
 import { CountrySearch } from "@/app/components/CountrySearch";
+import { HowToUseCard } from "@/app/components/HowToUseCard";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { NoteSidebar } from "@/app/components/NoteSidebar";
@@ -85,11 +86,9 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="bg-background min-h-screen">
         <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-gray-600 dark:text-gray-300">
-            Loading...
-          </div>
+          <div className="text-muted-foreground text-xl">Loading...</div>
         </div>
       </div>
     );
@@ -110,20 +109,7 @@ export default function Home() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Legend counts={getTotalCountsByStatus()} />
           <Stats stats={stats} />
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="mb-3 text-lg font-semibold text-gray-800 dark:text-white">
-              How to Use
-            </h3>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              <li>• Tap or search for a country to select it</li>
-              <li>• Click again to cycle through statuses</li>
-              <li>• Add notes and visit dates in the sidebar</li>
-              <li>
-                • Stored on this device only. Share below the map to send a link
-                to your phone or friends.
-              </li>
-            </ul>
-          </div>
+          <HowToUseCard />
         </div>
         <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
@@ -131,7 +117,7 @@ export default function Home() {
             getCountryStatus={getCountryStatus}
             onSelect={handleSearchSelect}
           />
-          <div className="mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
               <MapView
                 ref={mapRef}

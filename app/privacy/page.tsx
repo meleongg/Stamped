@@ -16,67 +16,65 @@ export default function PrivacyPolicy() {
             Back to Map
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Privacy Policy
-        </h1>
+        <h1 className="text-foreground text-3xl font-bold">Privacy Policy</h1>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
+      <div className="border-border bg-card rounded-lg border p-8 shadow-md">
         <div className="prose dark:prose-invert max-w-none">
-          <p className="mb-6 text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground mb-6">
             <strong>Last updated:</strong> {LAST_UPDATED}
           </p>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Data Collection and Storage
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             Stamped is a client-side application. Your travel data is stored
             locally in your browser and is not transmitted to or stored on any
             of our servers.
           </p>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Local Storage
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             Your travel data — country statuses, notes, and visit dates — is
             stored in your browser&apos;s <code>localStorage</code>. This data:
           </p>
-          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
+          <ul className="text-muted-foreground mb-4 ml-6 list-disc">
             <li>Remains on your device only</li>
             <li>Is not transmitted to any external servers by Stamped</li>
             <li>Can be cleared at any time by clearing your browser data</li>
             <li>Is not accessible to other websites</li>
           </ul>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Share Links
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             When you generate a share link, the following information is encoded
             into the URL itself (and therefore visible to anyone you send the
             link to):
           </p>
-          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
+          <ul className="text-muted-foreground mb-4 ml-6 list-disc">
             <li>The display name you chose for the share</li>
             <li>
               The list of countries you&apos;ve marked, with their statuses
               (visited / planning / want to visit)
             </li>
           </ul>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             Your <strong>notes and visit dates are never included</strong> in
             share links. They stay on your device.
           </p>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Third-Party Services
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             We use the following third-party services:
           </p>
-          <ul className="mb-4 ml-6 list-disc text-gray-700 dark:text-gray-300">
+          <ul className="text-muted-foreground mb-4 ml-6 list-disc">
             <li>
               <strong>
                 <a
@@ -126,19 +124,19 @@ export default function PrivacyPolicy() {
             </li>
           </ul>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Data Security
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             Since all map data is stored locally in your browser, the security
             of that data depends on your device&apos;s security. We recommend
             keeping your browser and device updated.
           </p>
 
-          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-foreground mb-4 text-xl font-semibold">
             Contact Information
           </h2>
-          <p className="mb-4 text-gray-700 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             For questions about this Privacy Policy, please contact us through
             our GitHub repository.
           </p>

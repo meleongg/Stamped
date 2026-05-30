@@ -128,20 +128,20 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   return (
     <div
       id="note-sidebar"
-      className="fixed inset-y-0 right-0 z-50 w-80 overflow-y-auto border-l border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      className="border-border bg-card fixed inset-y-0 right-0 z-50 w-80 overflow-y-auto border-l shadow-xl"
     >
       <div className="p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2
-            className="truncate text-xl font-bold text-gray-900 dark:text-white"
+            className="text-foreground truncate text-xl font-bold"
             title={displayName}
           >
             {displayName}
           </h2>
           <button
             onClick={onClose}
-            className="flex cursor-pointer items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center justify-center transition-colors"
             aria-label="Close sidebar"
           >
             <XIcon className="h-5 w-5" />
@@ -152,7 +152,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
         <div className="mb-6">
           <Label className="mb-3">Travel Status</Label>
           {!countryData && status === null && (
-            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground mb-2 text-xs">
               Pick a status below, or click the country on the map to cycle.
             </p>
           )}
@@ -168,8 +168,8 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                   onClick={() => handleStatusChange(statusValue)}
                   className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
                     isSelected
-                      ? "bg-gray-50 text-gray-900 dark:bg-gray-900/40 dark:text-white"
-                      : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900/30"
+                      ? "bg-accent text-accent-foreground"
+                      : "border-border text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground"
                   }`}
                   style={isSelected ? { borderColor: color } : undefined}
                   aria-pressed={isSelected}
@@ -256,7 +256,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
             placeholder="Add your thoughts, memories, or plans..."
             className="h-32 resize-none"
           />
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-muted-foreground mt-1.5 text-xs">
             Auto-saves when you click away.
           </p>
         </div>

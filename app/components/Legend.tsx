@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { TravelStatus } from "../types";
 
@@ -11,13 +11,11 @@ interface LegendProps {
 
 export const Legend: React.FC<LegendProps> = ({ counts }) => {
   return (
-    <Card className="border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <CardHeader className="pb-2">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-          Legend
-        </h3>
+    <Card className="border-border bg-card gap-0 p-4 shadow-md">
+      <CardHeader className="px-0 pb-2">
+        <CardTitle className="text-lg">Legend</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 px-0 pt-0">
         {ACTIVE_STATUSES.map((status) => {
           const color = STATUS_COLORS[status];
           const count = counts[status] || 0;
@@ -28,21 +26,16 @@ export const Legend: React.FC<LegendProps> = ({ counts }) => {
                   className="h-4 w-4 rounded-full"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="text-muted-foreground text-sm">
                   {STATUS_LABELS[status]}
                 </span>
               </div>
-              <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-              >
-                {count}
-              </Badge>
+              <Badge variant="secondary">{count}</Badge>
             </div>
           );
         })}
-        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-600">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="border-border mt-4 flex items-center justify-between border-t pt-3">
+          <span className="text-muted-foreground text-sm font-medium">
             Total Countries
           </span>
           <Badge variant="default" className="text-xs font-bold">

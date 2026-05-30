@@ -123,7 +123,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div className="relative">
         <Search
-          className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-gray-400"
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2"
           aria-hidden
         />
         <Input
@@ -150,13 +150,13 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="absolute top-1/2 right-9 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-9 -translate-y-1/2"
             aria-label="Clear search"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
-        <kbd className="absolute top-1/2 right-2 hidden h-5 -translate-y-1/2 items-center rounded border bg-gray-50 px-1.5 font-mono text-[10px] font-medium text-gray-500 select-none sm:inline-flex dark:bg-gray-700 dark:text-gray-300">
+        <kbd className="border-border bg-muted text-muted-foreground absolute top-1/2 right-2 hidden h-5 -translate-y-1/2 items-center rounded border px-1.5 font-mono text-[10px] font-medium select-none sm:inline-flex">
           ⌘K
         </kbd>
       </div>
@@ -165,10 +165,10 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
         <ul
           id="country-search-listbox"
           role="listbox"
-          className="absolute z-30 mt-1 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          className="border-border bg-card absolute z-30 mt-1 w-full overflow-hidden rounded-md border shadow-lg"
         >
           {results.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <li className="text-muted-foreground px-3 py-2 text-sm">
               No matching country
             </li>
           ) : (
@@ -188,8 +188,8 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
                   onMouseEnter={() => setHighlight(i)}
                   className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
                     active
-                      ? "bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
-                      : "text-gray-700 dark:text-gray-200"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground"
                   }`}
                 >
                   <span

@@ -50,8 +50,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
     }
   };
 
-  const controlClass =
-    "bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-md cursor-pointer";
+  const controlClass = "bg-card/90 hover:bg-card shadow-md cursor-pointer";
 
   return (
     <div className="absolute top-2 right-2 z-10 flex gap-2">

@@ -35,17 +35,15 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
     <div
       role="tooltip"
       aria-hidden
-      className="pointer-events-none absolute z-20 rounded-md border border-gray-200 bg-white/95 px-2.5 py-1.5 text-xs shadow-md backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
+      className="border-border bg-card/95 pointer-events-none absolute z-20 rounded-md border px-2.5 py-1.5 text-xs shadow-md backdrop-blur"
       style={{
         left: Math.max(0, left),
         top: Math.max(0, state.y + TOOLTIP_OFFSET),
       }}
     >
-      <div className="font-semibold text-gray-900 dark:text-gray-100">
-        {state.name}
-      </div>
+      <div className="text-foreground font-semibold">{state.name}</div>
       {state.status ? (
-        <div className="mt-0.5 flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+        <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5">
           <span
             className="inline-block h-2 w-2 rounded-full"
             style={{ backgroundColor: STATUS_COLORS[state.status] }}
@@ -53,9 +51,7 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
           {STATUS_LABELS[state.status]}
         </div>
       ) : (
-        <div className="mt-0.5 text-gray-500 dark:text-gray-400">
-          Not marked
-        </div>
+        <div className="text-muted-foreground mt-0.5">Not marked</div>
       )}
     </div>
   );
