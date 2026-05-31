@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CountryEntry, MapData, TravelStatus } from "../types";
+import { CountryEntry, MapData, TravelMapData } from "../types";
 import {
   cycleCountryStatus,
   localStorageStore,
   MapDataStore,
   removeCountryEntry,
+  stampCityEntry,
+  unstampCityEntry,
+  updateCityEntry,
   updateCountryEntry,
 } from "../utils/storage";
 
@@ -17,15 +20,19 @@ export interface UseMapDataOptions {
 export const useMapData = ({
   store = localStorageStore,
 }: UseMapDataOptions = {}) => {
-  const [mapData, setMapData] = useState<MapData>({});
+  const [travelMapData, setTravelMapData] = useState<TravelMapData>({
+    countries: {},
+    cities: {},
+  });
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     Promise.resolve(store.load()).then((data) => {
       if (cancelled) return;
-      setMapData(data);
+      setTravelMapData(data);
       setIsLoading(false);
     });
     return () => {
@@ -35,39 +42,77 @@ export const useMapData = ({
 
   useEffect(() => {
     if (!isLoading) {
-      void store.save(mapData);
+      void store.save(travelMapData);
     }
-  }, [mapData, isLoading, store]);
+  }, [travelMapData, isLoading, store]);
+
+  const mapData = travelMapData.countries;
 
   const updateCountry = (
     countryCode: string,
     updates: Partial<CountryEntry>,
   ) => {
-    setMapData((prev) => updateCountryEntry(prev, countryCode, updates));
+    setTravelMapData((prev) => ({
+      ...prev,
+      countries: updateCountryEntry(prev.countries, countryCode, updates),
+    }));
   };
 
   const cycleStatus = (countryCode: string) => {
-    setMapData((prev) => cycleCountryStatus(prev, countryCode));
+    setTravelMapData((prev) => ({
+      ...prev,
+      countries: cycleCountryStatus(prev.countries, countryCode),
+    }));
   };
 
   const removeCountry = (countryCode: string) => {
-    setMapData((prev) => removeCountryEntry(prev, countryCode));
+    setTravelMapData((prev) => ({
+      ...prev,
+      countries: removeCountryEntry(prev.countries, countryCode),
+    }));
     if (selectedCountry === countryCode) {
       setSelectedCountry(null);
     }
   };
 
-  const replaceMapData = (next: MapData) => {
-    setMapData(next);
+  const stampCity = (cityId: string) => {
+    setTravelMapData((prev) => stampCityEntry(prev, cityId));
+  };
+
+  const unstampCity = (cityId: string) => {
+    setTravelMapData((prev) => unstampCityEntry(prev, cityId));
+    if (selectedCityId === cityId) {
+      setSelectedCityId(null);
+    }
+  };
+
+  const updateCity = (
+    cityId: string,
+    updates: Partial<Pick<import("../types").CityEntry, "visitedAt" | "notes">>,
+  ) => {
+    setTravelMapData((prev) => updateCityEntry(prev, cityId, updates));
+  };
+
+  const replaceTravelMapData = (next: TravelMapData) => {
+    setTravelMapData(next);
   };
 
   const getCountryData = (countryCode: string): CountryEntry | null => {
     return mapData[countryCode] || null;
   };
 
-  const getCountryStatus = (countryCode: string): TravelStatus | null => {
+  const getCountryStatus = (countryCode: string) => {
     return mapData[countryCode]?.status || null;
   };
+
+  const getCityData = (cityId: string) => {
+    return travelMapData.cities[cityId] || null;
+  };
+
+  const isCityStamped = (cityId: string) =>
+    Boolean(travelMapData.cities[cityId]);
+
+  const getStampedCities = () => Object.values(travelMapData.cities);
 
   const getTotalCountsByStatus = () => {
     return Object.values(mapData).reduce(
@@ -75,21 +120,43 @@ export const useMapData = ({
         acc[entry.status] = (acc[entry.status] || 0) + 1;
         return acc;
       },
-      {} as Record<TravelStatus, number>,
+      {} as Record<import("../types").TravelStatus, number>,
     );
   };
 
+  const selectCountry = (countryCode: string | null) => {
+    setSelectedCountry(countryCode);
+    if (countryCode) setSelectedCityId(null);
+  };
+
+  const selectCity = (cityId: string | null) => {
+    setSelectedCityId(cityId);
+    if (cityId) setSelectedCountry(null);
+  };
+
   return {
+    travelMapData,
     mapData,
     selectedCountry,
-    setSelectedCountry,
+    setSelectedCountry: selectCountry,
+    selectedCityId,
+    setSelectedCityId: selectCity,
     updateCountry,
     cycleStatus,
     removeCountry,
-    replaceMapData,
+    stampCity,
+    unstampCity,
+    updateCity,
+    replaceTravelMapData,
     getCountryData,
     getCountryStatus,
+    getCityData,
+    isCityStamped,
+    getStampedCities,
     getTotalCountsByStatus,
     isLoading,
   };
 };
+
+// Back-compat alias
+export type { MapData };

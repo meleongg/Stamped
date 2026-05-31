@@ -38,11 +38,13 @@ export default async function OpenGraphImage({
   let name = "Travel";
   let statusByCountry: Record<string, TravelStatus> = {};
   let mapData: MapData = {};
+  let travelData = { countries: {} as MapData, cities: {} };
 
   try {
     const decoded = decodeMap(encoded);
     name = decoded.name;
-    mapData = decoded.data;
+    travelData = decoded.data;
+    mapData = decoded.data.countries;
     statusByCountry = Object.fromEntries(
       Object.entries(mapData).map(([code, entry]) => [code, entry.status]),
     );
@@ -52,7 +54,7 @@ export default async function OpenGraphImage({
     }
   }
 
-  const stats = computeStats(mapData);
+  const stats = computeStats(travelData);
   const countries = loadCountries();
 
   const projection = geoNaturalEarth1()

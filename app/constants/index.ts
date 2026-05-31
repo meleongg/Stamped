@@ -46,7 +46,14 @@ export const MAPVIEW_COLORS = {
   borderStrokeDark: "#94a3b8", // slate-400 — lighter edges on slate-600 land (dark mode)
   hoverStroke: "#1e40af", // Blue for hover
   hoverStrokeDark: "#93c5fd", // blue-300 — readable against all status fills
+  cityPinLight: "#0284c7", // sky-600
+  cityPinDark: "#38bdf8", // sky-400
 } as const;
+
+/** d3-zoom scale at which stamped city pins appear. */
+export const CITY_PIN_MIN_ZOOM = 2.5;
+
+export const CITY_PIN_RADIUS = 5;
 
 // Map dimensions
 export const MAP_DIMENSIONS = {

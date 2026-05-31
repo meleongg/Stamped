@@ -20,11 +20,11 @@ import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
-import { MapData, TravelStatus } from "@/app/types";
+import { TravelMapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { decodeMap } from "@/app/utils/share";
 import { computeStats } from "@/app/utils/stats";
-import { localStorageStore, mergeMapData } from "@/app/utils/storage";
+import { localStorageStore, mergeTravelMapData } from "@/app/utils/storage";
 
 interface SharedMapViewProps {
   encoded: string;
@@ -36,7 +36,10 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   ownerName,
 }) => {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
-  const [myData, setMyData] = useState<MapData>({});
+  const [myData, setMyData] = useState<TravelMapData>({
+    countries: {},
+    cities: {},
+  });
   const mapRef = useRef<MapViewHandle>(null);
 
   useEffect(() => {
@@ -54,11 +57,11 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   const stats = useMemo(() => computeStats(decoded.data), [decoded.data]);
 
   const getCountryStatus = (countryCode: string): TravelStatus | null => {
-    return decoded.data[countryCode]?.status || null;
+    return decoded.data.countries[countryCode]?.status || null;
   };
 
   const counts = useMemo(() => {
-    return Object.values(decoded.data).reduce(
+    return Object.values(decoded.data.countries).reduce(
       (acc, entry) => {
         acc[entry.status] = (acc[entry.status] || 0) + 1;
         return acc;
@@ -66,6 +69,11 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
       {} as Record<TravelStatus, number>,
     );
   }, [decoded.data]);
+
+  const sharedCities = useMemo(
+    () => Object.values(decoded.data.cities),
+    [decoded.data.cities],
+  );
 
   const handleCopyLink = async () => {
     if (typeof window === "undefined") return;
@@ -82,16 +90,20 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   const handleImport = async (strategy: "keep-mine" | "use-theirs") => {
     try {
       const mine = await Promise.resolve(localStorageStore.load());
-      const merged = mergeMapData(mine, decoded.data, strategy);
+      const merged = mergeTravelMapData(mine, decoded.data, strategy);
       await Promise.resolve(localStorageStore.save(merged));
       setMyData(merged);
-      const added = Object.keys(merged).length - Object.keys(mine).length;
+      const addedCountries =
+        Object.keys(merged.countries).length -
+        Object.keys(mine.countries).length;
+      const addedCities =
+        Object.keys(merged.cities).length - Object.keys(mine.cities).length;
       toast.success(
         strategy === "keep-mine"
-          ? `Added ${added} new ${added === 1 ? "country" : "countries"} from ${ownerName}'s map`
-          : `Replaced overlapping countries with ${ownerName}'s statuses`,
+          ? `Added ${addedCountries} ${addedCountries === 1 ? "country" : "countries"} and ${addedCities} ${addedCities === 1 ? "city" : "cities"} from ${ownerName}'s map`
+          : `Replaced overlapping entries with ${ownerName}'s map`,
       );
-      track("share_link_imported", { strategy, added });
+      track("share_link_imported", { strategy, added: addedCountries });
       setImportOpen(false);
     } catch {
       toast.error("Couldn't import. Please try again.");
@@ -139,11 +151,9 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>
-                    Import {ownerName}&apos;s countries?
-                  </DialogTitle>
+                  <DialogTitle>Import {ownerName}&apos;s map?</DialogTitle>
                   <DialogDescription>
-                    Pick what to do when a country appears on both maps.
+                    Pick what to do when a country or city appears on both maps.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-3">
@@ -154,10 +164,10 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                   >
                     <div className="flex flex-col items-start">
                       <span className="font-semibold">
-                        Add countries I don&apos;t have
+                        Add places I don&apos;t have
                       </span>
                       <span className="text-xs opacity-80">
-                        My existing statuses stay the same.
+                        My existing entries stay the same.
                       </span>
                     </div>
                   </Button>
@@ -168,10 +178,10 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                   >
                     <div className="flex flex-col items-start">
                       <span className="font-semibold">
-                        Overwrite with their statuses
+                        Overwrite with their map
                       </span>
                       <span className="text-xs opacity-80">
-                        Conflicts use {ownerName}&apos;s statuses.
+                        Conflicts use {ownerName}&apos;s data.
                       </span>
                     </div>
                   </Button>
@@ -191,14 +201,14 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
             </Button>
           </div>
 
-          <ShareDialog mapData={myData} />
+          <ShareDialog travelMapData={myData} />
         </div>
 
         <div className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
-            onSelect={handleSearchSelect}
+            onSelectCountry={handleSearchSelect}
             placeholder={`Search ${ownerName}'s countries...`}
           />
           <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
@@ -206,6 +216,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
               <MapView
                 ref={mapRef}
                 getCountryStatus={getCountryStatus}
+                stampedCities={sharedCities}
                 countries={countries}
                 isLoading={false}
                 readonly

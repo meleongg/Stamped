@@ -1,6 +1,13 @@
-import { CountryEntry, MapData, TravelStatus } from "../types";
+import { catalogEntryToCityEntry, getCityById } from "./cities";
+import {
+  CityData,
+  CountryEntry,
+  MapData,
+  TravelMapData,
+  EMPTY_TRAVEL_MAP,
+} from "../types";
 
-export const SHARE_FORMAT_VERSION = 1;
+export const SHARE_FORMAT_VERSION = 2;
 export const SHARE_NAME_MAX = 40;
 
 const STATUS_TO_CHAR: Record<TravelStatus, string> = {
@@ -9,6 +16,8 @@ const STATUS_TO_CHAR: Record<TravelStatus, string> = {
   want_to_visit: "w",
   avoid: "a",
 };
+
+type TravelStatus = CountryEntry["status"];
 
 const CHAR_TO_STATUS: Record<string, TravelStatus> = Object.entries(
   STATUS_TO_CHAR,
@@ -29,7 +38,7 @@ export class InvalidShareLinkError extends Error {
 
 export interface SharePayload {
   name: string;
-  data: MapData;
+  data: TravelMapData;
 }
 
 export interface DecodedShare extends SharePayload {
@@ -37,7 +46,6 @@ export interface DecodedShare extends SharePayload {
 }
 
 export const sanitizeName = (raw: string): string => {
-  // Strip newlines and control chars; collapse whitespace; trim; clamp length.
   const cleaned = raw
     .replace(/[\u0000-\u001f\u007f]/g, "")
     .replace(/\s+/g, " ")
@@ -107,14 +115,39 @@ const decodeCountries = (csv: string): MapData => {
   return result;
 };
 
+const encodeCities = (cities: CityData): string => {
+  return Object.keys(cities)
+    .filter((id) => /^[A-Za-z0-9_-]+$/.test(id))
+    .sort()
+    .join(",");
+};
+
+const decodeCities = (csv: string): CityData => {
+  if (!csv.trim()) return {};
+  const result: CityData = {};
+  for (const raw of csv.split(",")) {
+    const cityId = raw.trim();
+    if (!cityId) continue;
+    if (!/^[A-Za-z0-9_-]+$/.test(cityId)) {
+      throw new InvalidShareLinkError(`Bad city token: "${cityId}"`);
+    }
+    const catalog = getCityById(cityId);
+    if (!catalog) continue;
+    result[cityId] = { ...catalogEntryToCityEntry(catalog) };
+  }
+  return result;
+};
+
 export const encodeMap = (payload: SharePayload): string => {
   const name = sanitizeName(payload.name);
   if (!name) {
     throw new Error("Display name is required to generate a share link.");
   }
-  const csv = encodeCountries(payload.data);
-  const wire = `${SHARE_FORMAT_VERSION}\n${name}\n${csv}`;
-  return toBase64Url(wire);
+  const countriesCsv = encodeCountries(payload.data.countries);
+  const citiesCsv = encodeCities(payload.data.cities);
+  const lines = [String(SHARE_FORMAT_VERSION), name, countriesCsv];
+  if (citiesCsv) lines.push(citiesCsv);
+  return toBase64Url(lines.join("\n"));
 };
 
 export const decodeMap = (encoded: string): DecodedShare => {
@@ -136,15 +169,9 @@ export const decodeMap = (encoded: string): DecodedShare => {
 
   const versionStr = lines[0];
   const version = Number(versionStr);
-  if (!Number.isInteger(version) || version < 1) {
+  if (!Number.isInteger(version) || version < 1 || version > 2) {
     throw new InvalidShareLinkError(
       `Unsupported share version: "${versionStr}".`,
-    );
-  }
-
-  if (version !== SHARE_FORMAT_VERSION) {
-    throw new InvalidShareLinkError(
-      `Unsupported share version: ${version}. This app supports v${SHARE_FORMAT_VERSION}.`,
     );
   }
 
@@ -153,11 +180,23 @@ export const decodeMap = (encoded: string): DecodedShare => {
     throw new InvalidShareLinkError("Share link is missing a display name.");
   }
 
-  const csv = lines.slice(2).join("\n").trim();
-  const data = decodeCountries(csv);
+  const countriesCsv = lines[2]?.trim() ?? "";
+  const countries = decodeCountries(countriesCsv);
 
-  return { version, name, data };
+  let cities: CityData = {};
+  if (version >= 2 && lines.length > 3) {
+    cities = decodeCities(lines.slice(3).join("\n").trim());
+  }
+
+  return {
+    version,
+    name,
+    data: { countries, cities },
+  };
 };
+
+/** Legacy helper: countries-only MapData from TravelMapData */
+export const toLegacyMapData = (data: TravelMapData): MapData => data.countries;
 
 export const buildShareUrl = (
   origin: string,
@@ -170,3 +209,5 @@ export const buildShareUrl = (
 export const buildCompareUrl = (origin: string, theirData: string): string => {
   return `${origin.replace(/\/$/, "")}/compare/${theirData}`;
 };
+
+export { EMPTY_TRAVEL_MAP };

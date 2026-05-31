@@ -15,7 +15,7 @@ import { Check, Copy, Share2 } from "lucide-react";
 import { track } from "@vercel/analytics";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MapData } from "../types";
+import { TravelMapData } from "../types";
 import {
   SHARE_NAME_MAX,
   buildShareUrl,
@@ -27,10 +27,10 @@ import {
 const SHARE_NAME_STORAGE_KEY = "shareName";
 
 interface ShareDialogProps {
-  mapData: MapData;
+  travelMapData: TravelMapData;
 }
 
-export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
+export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
   const [open, setOpen] = useState(false);
   // Lazy init: read remembered name from localStorage once on first render.
   // Safe on the server (returns "") because the dialog content lives in a
@@ -43,29 +43,30 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
   const [copied, setCopied] = useState(false);
 
   const trimmedName = sanitizeName(name);
-  const canShare = isValidName(name) && Object.keys(mapData).length > 0;
+  const countryCount = Object.keys(travelMapData.countries).length;
+  const canShare = isValidName(name) && countryCount > 0;
 
   const shareUrl = useMemo(() => {
     if (!canShare || typeof window === "undefined") return "";
     try {
       return buildShareUrl(window.location.origin, {
         name: trimmedName,
-        data: mapData,
+        data: travelMapData,
       });
     } catch {
       return "";
     }
-  }, [canShare, trimmedName, mapData]);
+  }, [canShare, trimmedName, travelMapData]);
 
   const ogPreviewSrc = useMemo(() => {
     if (!canShare || typeof window === "undefined") return "";
     try {
-      const encoded = encodeMap({ name: trimmedName, data: mapData });
+      const encoded = encodeMap({ name: trimmedName, data: travelMapData });
       return `${window.location.origin}/m/${encoded}/opengraph-image`;
     } catch {
       return "";
     }
-  }, [canShare, trimmedName, mapData]);
+  }, [canShare, trimmedName, travelMapData]);
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -74,7 +75,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
       window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
       setCopied(true);
       toast.success("Link copied to clipboard");
-      track("share_link_copied", { countries: Object.keys(mapData).length });
+      track("share_link_copied", { countries: countryCount });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Couldn't copy. Select the link and copy manually.");
@@ -91,7 +92,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
           url: shareUrl,
         });
         window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
-        track("share_link_native", { countries: Object.keys(mapData).length });
+        track("share_link_native", { countries: countryCount });
       } catch {
         // User cancelled native share — no-op.
       }
@@ -100,7 +101,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ mapData }) => {
     }
   };
 
-  const totalCountries = Object.keys(mapData).length;
+  const totalCountries = countryCount;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

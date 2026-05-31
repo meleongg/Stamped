@@ -27,8 +27,17 @@ export const MapDataAttribution: React.FC<MapDataAttributionProps> = ({
       >
         world-atlas
       </a>
-      ). They reflect that source&apos;s cartographic choices, not a political
-      position by Stamped.
+      ). City names and locations come from Natural Earth&apos;s{" "}
+      <a
+        href={MAP_DATA_SOURCES.naturalEarthPopulatedPlaces}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:text-foreground underline underline-offset-2"
+      >
+        Populated Places
+      </a>{" "}
+      dataset (a filtered subset for search and stamping). They reflect those
+      sources&apos; cartographic choices, not a political position by Stamped.
     </p>
   );
 };

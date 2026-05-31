@@ -13,9 +13,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { MAP_DIMENSIONS, MAPVIEW_COLORS, STATUS_COLORS } from "../constants";
+import {
+  CITY_PIN_MIN_ZOOM,
+  CITY_PIN_RADIUS,
+  MAP_DIMENSIONS,
+  MAPVIEW_COLORS,
+  STATUS_COLORS,
+} from "../constants";
 import { useTheme } from "../contexts/ThemeContext";
-import { TravelStatus } from "../types";
+import { CityEntry, TravelStatus } from "../types";
 import { CountryFeature } from "../utils/geo";
 import { ExportButton } from "./ExportButton";
 import { MapTooltip, MapTooltipState } from "./MapTooltip";
@@ -44,6 +50,9 @@ interface MapViewProps {
   selectedCountry?: string | null;
   hoveredCountry?: string | null;
   onCountryHover?: (countryCode: string | null) => void;
+  stampedCities?: CityEntry[];
+  selectedCityId?: string | null;
+  onCityClick?: (cityId: string) => void;
   countries: CountryFeature[];
   isLoading: boolean;
   readonly?: boolean;
@@ -55,6 +64,7 @@ export interface MapViewHandle {
   zoomOut: () => void;
   reset: () => void;
   focusCountry: (countryCode: string) => void;
+  focusCity: (cityId: string, lat: number, lng: number) => void;
 }
 
 export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
@@ -65,6 +75,9 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     selectedCountry,
     hoveredCountry,
     onCountryHover,
+    stampedCities = [],
+    selectedCityId,
+    onCityClick,
     countries,
     isLoading,
     readonly = false,
@@ -81,6 +94,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   const [tooltip, setTooltip] = useState<MapTooltipState | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isPanning, setIsPanning] = useState(false);
+  const [zoomScale, setZoomScale] = useState(MIN_SCALE);
   const { theme } = useTheme();
 
   const projection = useMemo(
@@ -132,6 +146,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       })
       .on("zoom", (event) => {
         g.attr("transform", event.transform.toString());
+        setZoomScale(event.transform.k);
       })
       .on("end", () => setIsPanning(false));
 
@@ -203,6 +218,27 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     [countries, pathGenerator],
   );
 
+  const focusCity = useCallback(
+    (cityId: string, lat: number, lng: number) => {
+      if (!svgRef.current || !zoomBehaviorRef.current) return;
+      const projected = projection([lng, lat]);
+      if (!projected) return;
+      const [cx, cy] = projected;
+      const scale = Math.min(MAX_SCALE, Math.max(CITY_PIN_MIN_ZOOM + 1, 4));
+
+      const transform = zoomIdentity
+        .translate(MAP_DIMENSIONS.WIDTH / 2, MAP_DIMENSIONS.HEIGHT / 2)
+        .scale(scale)
+        .translate(-cx, -cy);
+
+      select(svgRef.current)
+        .transition()
+        .duration(TRANSITION_MS)
+        .call(zoomBehaviorRef.current.transform, transform);
+    },
+    [projection],
+  );
+
   useImperativeHandle(
     ref,
     () => ({
@@ -210,8 +246,9 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       zoomOut: handleZoomOut,
       reset: handleReset,
       focusCountry,
+      focusCity,
     }),
-    [handleZoomIn, handleZoomOut, handleReset, focusCountry],
+    [handleZoomIn, handleZoomOut, handleReset, focusCountry, focusCity],
   );
 
   const baseFill =
@@ -242,6 +279,26 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     setTooltip({
       name: countryName,
       status: getCountryStatus(countryCode),
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
+  const showCityPins = zoomScale >= CITY_PIN_MIN_ZOOM;
+  const cityPinFill =
+    theme === "dark" ? MAPVIEW_COLORS.cityPinDark : MAPVIEW_COLORS.cityPinLight;
+
+  const handleCityPointerMove = (
+    event: React.PointerEvent<SVGCircleElement>,
+    city: CityEntry,
+  ) => {
+    if (event.pointerType === "touch") return;
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltip({
+      name: city.name,
+      status: "visited",
+      isCity: true,
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     });
@@ -340,6 +397,40 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
               />
             );
           })}
+          {showCityPins &&
+            stampedCities.map((city) => {
+              const projected = projection([city.lng, city.lat]);
+              if (!projected) return null;
+              const [cx, cy] = projected;
+              const isSelected = selectedCityId === city.cityId;
+              const r = isSelected ? CITY_PIN_RADIUS + 2 : CITY_PIN_RADIUS;
+              return (
+                <circle
+                  key={city.cityId}
+                  cx={cx}
+                  cy={cy}
+                  r={r}
+                  fill={cityPinFill}
+                  stroke={theme === "dark" ? "#0f172a" : "#ffffff"}
+                  strokeWidth={isSelected ? 2 : 1}
+                  className={
+                    readonly
+                      ? "pointer-events-auto"
+                      : "pointer-events-auto cursor-pointer"
+                  }
+                  onClick={(e) => {
+                    if (readonly || !onCityClick) return;
+                    e.stopPropagation();
+                    onCityClick(city.cityId);
+                  }}
+                  onPointerMove={(e) => handleCityPointerMove(e, city)}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType !== "mouse") return;
+                    handleCityPointerMove(e, city);
+                  }}
+                />
+              );
+            })}
         </g>
       </svg>
 

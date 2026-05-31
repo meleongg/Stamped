@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "build:cities": "node scripts/build-city-catalog.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

@@ -13,7 +13,8 @@ import { CalendarIcon, CheckIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
-import { CountryEntry, TravelStatus } from "../types";
+import { CityEntry, CountryEntry, TravelStatus } from "../types";
+import { getCitiesByCountry } from "../utils/cities";
 
 interface NoteSidebarProps {
   countryCode: string | null;
@@ -26,6 +27,9 @@ interface NoteSidebarProps {
   onRemoveCountry: (countryCode: string) => void;
   onClose: () => void;
   isOpen: boolean;
+  stampedCities?: CityEntry[];
+  onStampCity?: (cityId: string) => void;
+  onUnstampCity?: (cityId: string) => void;
 }
 
 // Parse a YYYY-MM-DD string into a local-time Date (no timezone surprises).
@@ -62,6 +66,9 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   onRemoveCountry,
   onClose,
   isOpen,
+  stampedCities = [],
+  onStampCity,
+  onUnstampCity,
 }) => {
   // Parent passes key={selectedCountry}, so this component is remounted on
   // each country change. That means lazy state initializers correctly seed
@@ -118,6 +125,11 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   };
 
   const selectedDate = useMemo(() => parseDateString(visitedAt), [visitedAt]);
+
+  const catalogInCountry = countryCode ? getCitiesByCountry(countryCode) : [];
+  const unstampedCatalog = catalogInCountry.filter(
+    (c) => !stampedCities.some((s) => s.cityId === c.id),
+  );
 
   if (!isOpen || !countryCode) {
     return null;
@@ -260,6 +272,61 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
             Auto-saves when you click away.
           </p>
         </div>
+
+        {/* Cities */}
+        {(stampedCities.length > 0 || unstampedCatalog.length > 0) && (
+          <div className="mb-6">
+            <Label className="mb-2">Cities visited</Label>
+            {stampedCities.length > 0 && (
+              <ul className="mb-3 space-y-1">
+                {stampedCities.map((city) => (
+                  <li
+                    key={city.cityId}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="text-foreground truncate">
+                      {city.name}
+                    </span>
+                    {onUnstampCity && (
+                      <button
+                        type="button"
+                        onClick={() => onUnstampCity(city.cityId)}
+                        className="text-muted-foreground hover:text-foreground shrink-0 text-xs underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {unstampedCatalog.length > 0 && onStampCity && (
+              <select
+                className="border-input bg-background text-foreground w-full rounded-md border px-2 py-2 text-sm"
+                defaultValue=""
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (id) {
+                    onStampCity(id);
+                    e.target.value = "";
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  Add a city…
+                </option>
+                {unstampedCatalog.slice(0, 200).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              Zoom in on the map to see city stamps.
+            </p>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex flex-col gap-2">

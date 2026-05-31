@@ -22,14 +22,15 @@ export async function generateMetadata({
   const { data: encoded } = await params;
   try {
     const decoded = decodeMap(encoded);
-    const counts = countByStatus(decoded.data);
+    const counts = countByStatus(decoded.data.countries);
     const visited = counts.visited || 0;
     const planning = counts.planning || 0;
-    const total = Object.keys(decoded.data).length;
+    const total = Object.keys(decoded.data.countries).length;
+    const cityCount = Object.keys(decoded.data.cities).length;
     const subtitle =
-      total === 0
+      total === 0 && cityCount === 0
         ? "Track your travels on a world map"
-        : `${visited} visited · ${planning} planning · ${total} total`;
+        : `${visited} visited · ${planning} planning · ${total} total${cityCount > 0 ? ` · ${cityCount} cities` : ""}`;
     const title = `${decoded.name}'s travel map`;
     return {
       title,
@@ -89,8 +90,9 @@ export default async function SharedMapPage({ params }: PageProps) {
     );
   }
 
-  const counts = countByStatus(decoded.data);
-  const total = Object.keys(decoded.data).length;
+  const counts = countByStatus(decoded.data.countries);
+  const total = Object.keys(decoded.data.countries).length;
+  const cityCount = Object.keys(decoded.data.cities).length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -99,12 +101,15 @@ export default async function SharedMapPage({ params }: PageProps) {
           {decoded.name}&apos;s travel map
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {total === 0
+          {total === 0 && cityCount === 0
             ? "No countries marked yet."
-            : statusOrder
-                .map(
+            : [
+                ...statusOrder.map(
                   (s) => `${counts[s] || 0} ${STATUS_LABELS[s].toLowerCase()}`,
-                )
+                ),
+                cityCount > 0 ? `${cityCount} cities` : null,
+              ]
+                .filter(Boolean)
                 .join(" · ")}
         </p>
       </div>

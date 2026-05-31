@@ -19,7 +19,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
     latestVisitYear,
   } = stats;
 
-  if (stats.totalMarked === 0) {
+  if (stats.totalMarked === 0 && stats.citiesVisitedCount === 0) {
     return null;
   }
 
@@ -71,6 +71,17 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
             <span className="text-muted-foreground text-sm">Visits</span>
             <span className="text-foreground text-sm font-semibold">
               {yearLine}
+            </span>
+          </div>
+        )}
+
+        {stats.citiesVisitedCount > 0 && (
+          <div className="flex items-baseline justify-between">
+            <span className="text-muted-foreground text-sm">
+              Cities visited
+            </span>
+            <span className="text-foreground text-sm font-semibold">
+              {stats.citiesVisitedCount}
             </span>
           </div>
         )}

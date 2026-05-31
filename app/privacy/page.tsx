@@ -62,6 +62,10 @@ export default function PrivacyPolicy() {
               The list of countries you&apos;ve marked, with their statuses
               (visited / planning / want to visit)
             </li>
+            <li>
+              The list of cities you&apos;ve stamped (city IDs only — no notes
+              or visit dates)
+            </li>
           </ul>
           <p className="text-muted-foreground mb-4">
             Your <strong>notes and visit dates are never included</strong> in
@@ -101,6 +105,19 @@ export default function PrivacyPolicy() {
                 </a>
               </strong>{" "}
               — TopoJSON packaging of Natural Earth data (ISC License)
+            </li>
+            <li>
+              <strong>
+                <a
+                  href="https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  Natural Earth Populated Places
+                </a>
+              </strong>{" "}
+              — city names and coordinates (filtered subset), bundled locally
             </li>
             <li>
               <strong>Vercel</strong> — hosting, deployment, and bandwidth

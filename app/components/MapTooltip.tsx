@@ -6,6 +6,7 @@ import { TravelStatus } from "@/app/types";
 export interface MapTooltipState {
   name: string;
   status: TravelStatus | null;
+  isCity?: boolean;
   x: number;
   y: number;
 }
@@ -42,13 +43,17 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
       }}
     >
       <div className="text-foreground font-semibold">{state.name}</div>
-      {state.status ? (
+      {state.status || state.isCity ? (
         <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5">
           <span
             className="inline-block h-2 w-2 rounded-full"
-            style={{ backgroundColor: STATUS_COLORS[state.status] }}
+            style={{
+              backgroundColor: state.isCity
+                ? "#0284c7"
+                : STATUS_COLORS[state.status!],
+            }}
           />
-          {STATUS_LABELS[state.status]}
+          {state.isCity ? "Visited" : STATUS_LABELS[state.status!]}
         </div>
       ) : (
         <div className="text-muted-foreground mt-0.5">Not marked</div>

@@ -4,7 +4,7 @@ import {
   TOTAL_CONTINENTS,
   getContinent,
 } from "../constants/continents";
-import { CountryEntry, MapData, TravelStatus } from "../types";
+import { CountryEntry, MapData, TravelMapData, TravelStatus } from "../types";
 
 export interface MapStats {
   totalCountriesInWorld: number;
@@ -17,6 +17,7 @@ export interface MapStats {
   totalContinents: number;
   firstVisitYear: number | null;
   latestVisitYear: number | null;
+  citiesVisitedCount: number;
 }
 
 // Approximate number of sovereign countries; matches what most users expect
@@ -35,7 +36,9 @@ const parseYear = (entry: CountryEntry): number | null => {
   return Number.isFinite(year) && year > 1900 && year < 2200 ? year : null;
 };
 
-export const computeStats = (data: MapData): MapStats => {
+export const computeStats = (data: MapData | TravelMapData): MapStats => {
+  const countries = "countries" in data ? data.countries : (data as MapData);
+  const cities = "cities" in data ? data.cities : {};
   const byStatus: Record<TravelStatus, number> = {
     visited: 0,
     planning: 0,
@@ -47,11 +50,12 @@ export const computeStats = (data: MapData): MapStats => {
   let firstVisitYear: number | null = null;
   let latestVisitYear: number | null = null;
 
-  for (const entry of Object.values(data)) {
-    if (!isStatus(entry.status)) continue;
-    byStatus[entry.status] += 1;
+  for (const entry of Object.values(countries)) {
+    const status = entry.status;
+    if (!isStatus(status)) continue;
+    byStatus[status] += 1;
 
-    if (entry.status === "visited") {
+    if (status === "visited") {
       const continent = getContinent(entry.countryCode);
       if (continent !== "Other") visitedContinents.add(continent);
 
@@ -76,7 +80,7 @@ export const computeStats = (data: MapData): MapStats => {
 
   return {
     totalCountriesInWorld: TOTAL_COUNTRIES_IN_WORLD,
-    totalMarked: Object.keys(data).length,
+    totalMarked: Object.keys(countries).length,
     byStatus,
     visitedCount,
     visitedPercent,
@@ -85,5 +89,6 @@ export const computeStats = (data: MapData): MapStats => {
     totalContinents: TOTAL_CONTINENTS,
     firstVisitYear,
     latestVisitYear,
+    citiesVisitedCount: Object.keys(cities).length,
   };
 };

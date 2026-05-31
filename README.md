@@ -74,6 +74,9 @@ public/              Static assets + bundled TopoJSON world data
 ## Attribution
 
 - Country boundaries and names from [Natural Earth](https://www.naturalearthdata.com/) (Admin 0 – Countries), packaged as TopoJSON via [world-atlas](https://github.com/topojson/world-atlas) (ISC License © 2013-2019 Michael Bostock)
+- City names and locations from [Natural Earth Populated Places](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/) (10m cultural vectors), filtered to capitals and major cities and bundled locally
 - Icons from [Lucide](https://lucide.dev), ISC License
 
-Map boundaries and labels reflect Natural Earth’s cartographic choices, not a political position by Stamped.
+Map boundaries, country labels, and city locations reflect Natural Earth’s cartographic choices, not a political position by Stamped.
+
+To regenerate the city catalog after updating source data: `npm run build:cities`

@@ -8,14 +8,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MapView } from "@/app/components/MapView";
-import { MapData, TravelStatus } from "@/app/types";
+import { MapData, TravelMapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { localStorageStore, mergeMapData } from "@/app/utils/storage";
 
 interface CompareViewProps {
   theirEncoded: string;
   theirName: string;
-  theirData: MapData;
+  theirData: TravelMapData;
 }
 
 type OverlayCategory = "both" | "onlyMine" | "onlyTheirs" | "neither";
@@ -43,7 +43,10 @@ export const CompareView: React.FC<CompareViewProps> = ({
   theirData,
 }) => {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
-  const [mine, setMine] = useState<MapData>({});
+  const [mine, setMine] = useState<TravelMapData>({
+    countries: {},
+    cities: {},
+  });
   const [mineLoading, setMineLoading] = useState(true);
 
   useEffect(() => {
@@ -59,8 +62,8 @@ export const CompareView: React.FC<CompareViewProps> = ({
   }, []);
 
   const getCategory = (countryCode: string): OverlayCategory => {
-    const m = isVisited(mine[countryCode]);
-    const t = isVisited(theirData[countryCode]);
+    const m = isVisited(mine.countries[countryCode]);
+    const t = isVisited(theirData.countries[countryCode]);
     if (m && t) return "both";
     if (m && !t) return "onlyMine";
     if (!m && t) return "onlyTheirs";
@@ -79,8 +82,8 @@ export const CompareView: React.FC<CompareViewProps> = ({
       neither: 0,
     };
     const allCodes = new Set<string>([
-      ...Object.keys(mine),
-      ...Object.keys(theirData),
+      ...Object.keys(mine.countries),
+      ...Object.keys(theirData.countries),
     ]);
     for (const code of allCodes) {
       const cat = getCategory(code);
@@ -90,9 +93,10 @@ export const CompareView: React.FC<CompareViewProps> = ({
   }, [mine, theirData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const uniqueToThem = useMemo(() => {
-    return Object.entries(theirData)
+    return Object.entries(theirData.countries)
       .filter(
-        ([code, entry]) => entry.status === "visited" && !isVisited(mine[code]),
+        ([code, entry]) =>
+          entry.status === "visited" && !isVisited(mine.countries[code]),
       )
       .map(([code]) => code);
   }, [mine, theirData]);
@@ -103,9 +107,11 @@ export const CompareView: React.FC<CompareViewProps> = ({
       for (const code of uniqueToThem) {
         toAdd[code] = { countryCode: code, status: "want_to_visit" };
       }
-      const merged = mergeMapData(mine, toAdd, "keep-mine");
-      await Promise.resolve(localStorageStore.save(merged));
-      setMine(merged);
+      const merged = mergeMapData(mine.countries, toAdd, "keep-mine");
+      await Promise.resolve(
+        localStorageStore.save({ ...mine, countries: merged }),
+      );
+      setMine({ ...mine, countries: merged });
       toast.success(
         `Added ${uniqueToThem.length} ${
           uniqueToThem.length === 1 ? "country" : "countries"
@@ -205,6 +211,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
               <MapView
                 getCountryStatus={() => null}
                 getCountryFill={(code) => getCountryFill(code)}
+                stampedCities={Object.values(theirData.cities)}
                 countries={countries}
                 isLoading={false}
                 readonly
