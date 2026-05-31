@@ -137,8 +137,10 @@ export const stampCityEntry = (
   const catalog = getCityById(catalogId);
   if (!catalog) return data;
 
+  const existing = data.cities[catalogId];
   const entry: CityEntry = {
     ...catalogEntryToCityEntry(catalog),
+    stampedAt: existing?.stampedAt ?? new Date().toISOString(),
   };
 
   return {

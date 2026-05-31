@@ -9,11 +9,29 @@ import { NoteSidebar } from "@/app/components/NoteSidebar";
 import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
-import { CityCatalogEntry } from "@/app/types";
+import { CityCatalogEntry, CityEntry } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { computeStats } from "@/app/utils/stats";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+
+const compareCitiesByStampOrder = (a: CityEntry, b: CityEntry): number => {
+  if (a.stampedAt && b.stampedAt) return a.stampedAt.localeCompare(b.stampedAt);
+  if (a.stampedAt) return -1;
+  if (b.stampedAt) return 1;
+  return a.name.localeCompare(b.name);
+};
+
+/** Radix popovers portal outside the sidebar; treat them as in-sidebar clicks. */
+const isSidebarInteraction = (target: Node): boolean => {
+  if (!(target instanceof Element)) return false;
+  return (
+    document.getElementById("note-sidebar")?.contains(target) ||
+    document.getElementById("city-sidebar")?.contains(target) ||
+    document.getElementById("map-workspace")?.contains(target) ||
+    target.closest('[data-slot="popover-content"]') !== null
+  );
+};
 
 export default function Home() {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
@@ -52,7 +70,9 @@ export default function Home() {
 
   const stampedCitiesInCountry = useMemo(() => {
     if (!selectedCountry) return [];
-    return stampedCities.filter((c) => c.countryCode === selectedCountry);
+    return stampedCities
+      .filter((c) => c.countryCode === selectedCountry)
+      .sort(compareCitiesByStampOrder);
   }, [selectedCountry, stampedCities]);
 
   useEffect(() => {
@@ -66,10 +86,7 @@ export default function Home() {
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node;
-      if (document.getElementById("note-sidebar")?.contains(target)) return;
-      if (document.getElementById("city-sidebar")?.contains(target)) return;
-      if (document.getElementById("map-workspace")?.contains(target)) return;
+      if (isSidebarInteraction(e.target as Node)) return;
       setSelectedCountry(null);
       setSelectedCityId(null);
     };

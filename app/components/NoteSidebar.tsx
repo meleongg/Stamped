@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, CheckIcon, XIcon } from "lucide-react";
+import { CalendarIcon, CheckIcon, ChevronDown, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
@@ -81,6 +81,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
     () => countryData?.status ?? null,
   );
   const [dateOpen, setDateOpen] = useState(false);
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
 
   const handleSave = () => {
     if (!countryCode) return;
@@ -301,26 +302,41 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               </ul>
             )}
             {unstampedCatalog.length > 0 && onStampCity && (
-              <select
-                className="border-input bg-background text-foreground w-full rounded-md border px-2 py-2 text-sm"
-                defaultValue=""
-                onChange={(e) => {
-                  const id = e.target.value;
-                  if (id) {
-                    onStampCity(id);
-                    e.target.value = "";
-                  }
-                }}
-              >
-                <option value="" disabled>
-                  Add a city…
-                </option>
-                {unstampedCatalog.slice(0, 200).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <Popover open={cityPickerOpen} onOpenChange={setCityPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 w-full cursor-pointer justify-between font-normal"
+                  >
+                    <span className="text-muted-foreground">Add a city…</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[var(--radix-popover-trigger-width)] overflow-hidden p-0"
+                  align="start"
+                  sideOffset={6}
+                  collisionPadding={16}
+                >
+                  <ul className="max-h-[min(16rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain">
+                    {unstampedCatalog.slice(0, 200).map((c) => (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          className="hover:bg-accent hover:text-accent-foreground active:bg-accent flex w-full cursor-pointer items-center px-3 py-3 text-left text-base"
+                          onClick={() => {
+                            onStampCity(c.id);
+                            setCityPickerOpen(false);
+                          }}
+                        >
+                          {c.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
             )}
             <p className="text-muted-foreground mt-1.5 text-xs">
               Zoom in on the map to see city stamps.

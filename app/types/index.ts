@@ -30,6 +30,8 @@ export interface CityEntry {
   name: string;
   lat: number;
   lng: number;
+  /** ISO timestamp when the city was first stamped (local only). */
+  stampedAt?: string;
   visitedAt?: string;
   notes?: string;
 }
