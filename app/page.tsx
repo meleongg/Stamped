@@ -2,7 +2,7 @@
 
 import { CitySidebar } from "@/app/components/CitySidebar";
 import { CountrySearch } from "@/app/components/CountrySearch";
-import { HowToUseCard } from "@/app/components/HowToUseCard";
+import { useHowToUse } from "@/app/components/HowToUseProvider";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { NoteSidebar } from "@/app/components/NoteSidebar";
@@ -61,6 +61,8 @@ export default function Home() {
   } = useMapData();
 
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const { openHelp, hasDismissedHelp } = useHowToUse();
+  const autoOpenedHelpRef = useRef(false);
 
   const stats = useMemo(() => computeStats(travelMapData), [travelMapData]);
 
@@ -100,6 +102,19 @@ export default function Home() {
       document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [selectedCountry, selectedCityId, setSelectedCountry, setSelectedCityId]);
+
+  useEffect(() => {
+    if (isLoading || autoOpenedHelpRef.current) return;
+
+    const isEmpty =
+      Object.keys(travelMapData.countries).length === 0 &&
+      Object.keys(travelMapData.cities).length === 0;
+
+    if (isEmpty && !hasDismissedHelp()) {
+      autoOpenedHelpRef.current = true;
+      openHelp();
+    }
+  }, [isLoading, travelMapData, hasDismissedHelp, openHelp]);
 
   const handleCountryClick = (countryCode: string) => {
     if (selectedCountry === countryCode) {
@@ -168,7 +183,6 @@ export default function Home() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Legend counts={getTotalCountsByStatus()} />
           <Stats stats={stats} />
-          <HowToUseCard />
         </div>
         <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch

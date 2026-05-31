@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Toaster } from "sonner";
 import { AppLogo } from "./components/AppLogo";
 import { Footer } from "./components/Footer";
+import { HeaderHelpButton } from "./components/HeaderHelpButton";
+import { HowToUseProvider } from "./components/HowToUseProvider";
 import { JsonLd, webApplicationLd } from "./components/JsonLd";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -87,38 +89,43 @@ export default function RootLayout({
       >
         <JsonLd data={webApplicationLd(SITE_URL)} />
         <ThemeProvider>
-          <div className="bg-background flex min-h-screen flex-col">
-            <header className="bg-card border-border border-b shadow-sm">
-              <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between gap-4">
-                  <Link
-                    href="/"
-                    aria-label="Stamped home"
-                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:focus-visible:ring-sky-400"
-                  >
-                    <AppLogo />
-                    <span className="leading-tight">
-                      <h1 className="font-wordmark text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
-                        Stamped
-                      </h1>
-                    </span>
-                  </Link>
-                  <ThemeToggle />
+          <HowToUseProvider>
+            <div className="bg-background flex min-h-screen flex-col">
+              <header className="bg-card border-border border-b shadow-sm">
+                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                  <div className="flex items-center justify-between gap-4">
+                    <Link
+                      href="/"
+                      aria-label="Stamped home"
+                      className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:focus-visible:ring-sky-400"
+                    >
+                      <AppLogo />
+                      <span className="leading-tight">
+                        <h1 className="font-wordmark text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                          Stamped
+                        </h1>
+                      </span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      <HeaderHelpButton />
+                      <ThemeToggle />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </header>
+              </header>
 
-            <main className="flex-1">{children}</main>
+              <main className="flex-1">{children}</main>
 
-            <Footer />
-          </div>
-          <Toaster
-            position="bottom-center"
-            theme="system"
-            richColors
-            closeButton={false}
-            duration={2500}
-          />
+              <Footer />
+            </div>
+            <Toaster
+              position="bottom-center"
+              theme="system"
+              richColors
+              closeButton={false}
+              duration={2500}
+            />
+          </HowToUseProvider>
         </ThemeProvider>
         <Analytics />
       </body>
