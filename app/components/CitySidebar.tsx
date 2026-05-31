@@ -9,10 +9,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, XIcon } from "lucide-react";
+import { CalendarIcon, CheckIcon, XIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CityEntry } from "../types";
+import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
+import { CityEntry, TravelStatus } from "../types";
 import { getCountryNameByCode } from "../utils/countryNames";
 
 interface CitySidebarProps {
@@ -20,7 +21,7 @@ interface CitySidebarProps {
   cityData: CityEntry | null;
   onUpdateCity: (
     cityId: string,
-    updates: Partial<Pick<CityEntry, "visitedAt" | "notes">>,
+    updates: Partial<Pick<CityEntry, "status" | "visitedAt" | "notes">>,
   ) => void;
   onUnstampCity: (cityId: string) => void;
   onClose: () => void;
@@ -63,6 +64,9 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
   const [visitedAt, setVisitedAt] = useState<string>(
     () => cityData?.visitedAt ?? "",
   );
+  const [status, setStatus] = useState<TravelStatus>(
+    () => cityData?.status ?? "visited",
+  );
   const [dateOpen, setDateOpen] = useState(false);
 
   const selectedDate = useMemo(() => parseDateString(visitedAt), [visitedAt]);
@@ -75,8 +79,9 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
 
   const handleSave = () => {
     onUpdateCity(cityId, {
+      status,
       notes: notes.trim() || undefined,
-      visitedAt: visitedAt || undefined,
+      visitedAt: status === "visited" ? visitedAt || undefined : undefined,
     });
     toast.success(`Saved · ${cityData.name}`);
   };
@@ -84,6 +89,18 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
   const handleUnstamp = () => {
     onUnstampCity(cityId);
     toast.success(`Removed stamp · ${cityData.name}`);
+  };
+
+  const handleStatusChange = (newStatus: TravelStatus) => {
+    if (newStatus === status) return;
+    setStatus(newStatus);
+    if (newStatus !== "visited") {
+      setVisitedAt("");
+    }
+    onUpdateCity(cityId, {
+      status: newStatus,
+      visitedAt: newStatus === "visited" ? visitedAt || undefined : undefined,
+    });
   };
 
   const handleDateSelect = (next: Date | undefined) => {
@@ -121,33 +138,73 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
         </div>
 
         <div className="mb-6">
-          <Label className="mb-2">Visit Date (Optional)</Label>
-          <Popover open={dateOpen} onOpenChange={setDateOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={`h-10 w-full cursor-pointer justify-start text-left font-normal ${
-                  visitedAt ? "" : "text-muted-foreground"
-                }`}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
-                <span className="flex-1 truncate">
-                  {visitedAt ? formatDateDisplay(visitedAt) : "Pick a date"}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start" sideOffset={6}>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                disabled={(date) => date > new Date()}
-                defaultMonth={selectedDate ?? new Date()}
-                autoFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label className="mb-3">Travel Status</Label>
+          <div className="flex flex-col gap-2">
+            {ACTIVE_STATUSES.map((statusValue) => {
+              const label = STATUS_LABELS[statusValue];
+              const isSelected = status === statusValue;
+              const color = STATUS_COLORS[statusValue];
+              return (
+                <button
+                  key={statusValue}
+                  type="button"
+                  onClick={() => handleStatusChange(statusValue)}
+                  className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                    isSelected
+                      ? "bg-accent text-accent-foreground"
+                      : "border-border text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground"
+                  }`}
+                  style={isSelected ? { borderColor: color } : undefined}
+                  aria-pressed={isSelected}
+                >
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="flex-1 truncate text-left">{label}</span>
+                  {isSelected && (
+                    <CheckIcon className="h-4 w-4 shrink-0" style={{ color }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {status === "visited" && (
+          <div className="mb-6">
+            <Label className="mb-2">Visit Date (Optional)</Label>
+            <Popover open={dateOpen} onOpenChange={setDateOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`h-10 w-full cursor-pointer justify-start text-left font-normal ${
+                    visitedAt ? "" : "text-muted-foreground"
+                  }`}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
+                  <span className="flex-1 truncate">
+                    {visitedAt ? formatDateDisplay(visitedAt) : "Pick a date"}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto p-0"
+                align="start"
+                sideOffset={6}
+              >
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => date > new Date()}
+                  defaultMonth={selectedDate ?? new Date()}
+                  autoFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
 
         <div className="mb-6">
           <Label className="mb-2">Notes</Label>

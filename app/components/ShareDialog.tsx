@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Copy, Share2 } from "lucide-react";
 import { track } from "@vercel/analytics";
+import { Check, Copy, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TravelMapData } from "../types";
@@ -25,6 +25,7 @@ import {
 } from "../utils/share";
 
 const SHARE_NAME_STORAGE_KEY = "shareName";
+const SHARE_NAME_EXAMPLE = "My Awesome Map";
 
 interface ShareDialogProps {
   travelMapData: TravelMapData;
@@ -120,31 +121,32 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
           Share my map
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-[min(100vw-2rem,32rem)]">
         <DialogHeader>
           <DialogTitle>Share your travel map</DialogTitle>
           <DialogDescription>
-            We&apos;ll bake your name and country statuses into the link. Notes
-            and dates stay private on your device.
+            We&apos;ll bake your map name and travel statuses into the link.
+            Notes and dates stay private on your device.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="share-name">
-              Your name
+              Map name
               <span className="ml-1 text-red-500">*</span>
             </Label>
             <Input
               id="share-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Melvin"
+              placeholder={`e.g. ${SHARE_NAME_EXAMPLE}`}
               maxLength={SHARE_NAME_MAX}
               autoFocus
+              className="w-full"
             />
             <p className="text-muted-foreground text-xs">
-              Shown as &quot;{trimmedName || "Your name"}&apos;s travel
+              Shown as &quot;{trimmedName || SHARE_NAME_EXAMPLE}&apos;s travel
               map&quot; on the share page.
             </p>
           </div>
@@ -155,7 +157,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
             </p>
           ) : !isValidName(name) ? (
             <p className="text-muted-foreground text-sm">
-              Enter your name to generate a share link.
+              Enter a map name to generate a share link.
             </p>
           ) : (
             <>

@@ -15,7 +15,6 @@ import {
 } from "react";
 import {
   CITY_PIN_MIN_ZOOM,
-  CITY_PIN_RADIUS,
   MAP_DIMENSIONS,
   MAPVIEW_COLORS,
   STATUS_COLORS,
@@ -23,6 +22,7 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { CityEntry, TravelStatus } from "../types";
 import { CountryFeature } from "../utils/geo";
+import { getCityPinRadius, getCityPinStrokeWidth } from "../utils/mapPins";
 import { ExportButton } from "./ExportButton";
 import { MapTooltip, MapTooltipState } from "./MapTooltip";
 import { MapZoomControls } from "./MapZoomControls";
@@ -285,8 +285,10 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   };
 
   const showCityPins = zoomScale >= CITY_PIN_MIN_ZOOM;
-  const cityPinFill =
-    theme === "dark" ? MAPVIEW_COLORS.cityPinDark : MAPVIEW_COLORS.cityPinLight;
+  const cityPinStroke =
+    theme === "dark"
+      ? MAPVIEW_COLORS.cityPinStrokeDark
+      : MAPVIEW_COLORS.cityPinStrokeLight;
 
   const handleCityPointerMove = (
     event: React.PointerEvent<SVGCircleElement>,
@@ -297,8 +299,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     const rect = containerRef.current.getBoundingClientRect();
     setTooltip({
       name: city.name,
-      status: "visited",
-      isCity: true,
+      status: city.status,
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     });
@@ -403,16 +404,28 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
               if (!projected) return null;
               const [cx, cy] = projected;
               const isSelected = selectedCityId === city.cityId;
-              const r = isSelected ? CITY_PIN_RADIUS + 2 : CITY_PIN_RADIUS;
+              const r = getCityPinRadius({
+                zoomScale,
+                containerWidth,
+                mapWidth: MAP_DIMENSIONS.WIDTH,
+                isSelected,
+              });
+              const strokeWidth = getCityPinStrokeWidth(
+                zoomScale,
+                containerWidth,
+                MAP_DIMENSIONS.WIDTH,
+              );
+              const fillColor =
+                STATUS_COLORS[city.status] ?? STATUS_COLORS.visited;
               return (
                 <circle
                   key={city.cityId}
                   cx={cx}
                   cy={cy}
                   r={r}
-                  fill={cityPinFill}
-                  stroke={theme === "dark" ? "#0f172a" : "#ffffff"}
-                  strokeWidth={isSelected ? 2 : 1}
+                  fill={fillColor}
+                  stroke={cityPinStroke}
+                  strokeWidth={strokeWidth}
                   className={
                     readonly
                       ? "pointer-events-auto"

@@ -7,7 +7,7 @@ import {
   EMPTY_TRAVEL_MAP,
 } from "../types";
 
-export const SHARE_FORMAT_VERSION = 2;
+export const SHARE_FORMAT_VERSION = 3;
 export const SHARE_NAME_MAX = 40;
 
 const STATUS_TO_CHAR: Record<TravelStatus, string> = {
@@ -116,8 +116,10 @@ const decodeCountries = (csv: string): MapData => {
 };
 
 const encodeCities = (cities: CityData): string => {
-  return Object.keys(cities)
-    .filter((id) => /^[A-Za-z0-9_-]+$/.test(id))
+  return Object.values(cities)
+    .filter((entry) => entry?.cityId && entry.status)
+    .map((entry) => `${entry.cityId}${STATUS_TO_CHAR[entry.status]}`)
+    .filter((token) => /^[A-Za-z0-9_-]+[vpwa]$/.test(token))
     .sort()
     .join(",");
 };
@@ -126,14 +128,17 @@ const decodeCities = (csv: string): CityData => {
   if (!csv.trim()) return {};
   const result: CityData = {};
   for (const raw of csv.split(",")) {
-    const cityId = raw.trim();
-    if (!cityId) continue;
-    if (!/^[A-Za-z0-9_-]+$/.test(cityId)) {
-      throw new InvalidShareLinkError(`Bad city token: "${cityId}"`);
+    const token = raw.trim();
+    if (!token) continue;
+    const statusChar = token.slice(-1);
+    const cityId = token.slice(0, -1);
+    const status = CHAR_TO_STATUS[statusChar];
+    if (!status || !cityId || !/^[A-Za-z0-9_-]+$/.test(cityId)) {
+      throw new InvalidShareLinkError(`Bad city token: "${token}"`);
     }
     const catalog = getCityById(cityId);
     if (!catalog) continue;
-    result[cityId] = { ...catalogEntryToCityEntry(catalog) };
+    result[cityId] = { ...catalogEntryToCityEntry(catalog, status) };
   }
   return result;
 };
@@ -163,13 +168,13 @@ export const decodeMap = (encoded: string): DecodedShare => {
   }
 
   const lines = wire.split("\n");
-  if (lines.length < 2) {
+  if (lines.length < 3) {
     throw new InvalidShareLinkError("Malformed share payload.");
   }
 
   const versionStr = lines[0];
   const version = Number(versionStr);
-  if (!Number.isInteger(version) || version < 1 || version > 2) {
+  if (version !== SHARE_FORMAT_VERSION) {
     throw new InvalidShareLinkError(
       `Unsupported share version: "${versionStr}".`,
     );
@@ -183,10 +188,8 @@ export const decodeMap = (encoded: string): DecodedShare => {
   const countriesCsv = lines[2]?.trim() ?? "";
   const countries = decodeCountries(countriesCsv);
 
-  let cities: CityData = {};
-  if (version >= 2 && lines.length > 3) {
-    cities = decodeCities(lines.slice(3).join("\n").trim());
-  }
+  const citiesCsv = lines.length > 3 ? lines.slice(3).join("\n").trim() : "";
+  const cities = decodeCities(citiesCsv);
 
   return {
     version,
@@ -194,9 +197,6 @@ export const decodeMap = (encoded: string): DecodedShare => {
     data: { countries, cities },
   };
 };
-
-/** Legacy helper: countries-only MapData from TravelMapData */
-export const toLegacyMapData = (data: TravelMapData): MapData => data.countries;
 
 export const buildShareUrl = (
   origin: string,

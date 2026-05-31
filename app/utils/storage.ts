@@ -19,36 +19,15 @@ export interface MapDataStore {
   save(data: TravelMapData): Promise<void> | void;
 }
 
-const isLegacyArray = (parsed: unknown): parsed is CountryEntry[] =>
-  Array.isArray(parsed);
-
-const isLegacyFlatMap = (parsed: unknown): parsed is MapData => {
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
-    return false;
-  if ("countries" in parsed || "cities" in parsed) return false;
-  return true;
-};
-
-const convertArrayToObject = (entries: CountryEntry[]): MapData => {
-  return entries.reduce((acc, entry) => {
-    acc[entry.countryCode] = entry;
-    return acc;
-  }, {} as MapData);
-};
-
 export const normalizeStoredData = (parsed: unknown): TravelMapData => {
-  if (isLegacyArray(parsed)) {
-    return { countries: convertArrayToObject(parsed), cities: {} };
-  }
-  if (isLegacyFlatMap(parsed)) {
-    return { countries: parsed, cities: {} };
-  }
-  if (parsed && typeof parsed === "object") {
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
     const obj = parsed as Partial<TravelMapData>;
-    return {
-      countries: obj.countries ?? {},
-      cities: obj.cities ?? {},
-    };
+    if ("countries" in obj || "cities" in obj) {
+      return {
+        countries: obj.countries ?? {},
+        cities: obj.cities ?? {},
+      };
+    }
   }
   return EMPTY_TRAVEL_MAP;
 };
@@ -139,8 +118,10 @@ export const stampCityEntry = (
 
   const existing = data.cities[catalogId];
   const entry: CityEntry = {
-    ...catalogEntryToCityEntry(catalog),
+    ...catalogEntryToCityEntry(catalog, existing?.status ?? "visited"),
     stampedAt: existing?.stampedAt ?? new Date().toISOString(),
+    visitedAt: existing?.visitedAt,
+    notes: existing?.notes,
   };
 
   return {
@@ -152,18 +133,39 @@ export const stampCityEntry = (
 export const updateCityEntry = (
   data: TravelMapData,
   cityId: string,
-  updates: Partial<Pick<CityEntry, "visitedAt" | "notes">>,
+  updates: Partial<Pick<CityEntry, "status" | "visitedAt" | "notes">>,
 ): TravelMapData => {
   const existing = data.cities[cityId];
   if (!existing) return data;
+
+  const next: CityEntry = { ...existing, ...updates };
+  if (next.status !== "visited") {
+    next.visitedAt = undefined;
+  }
 
   return {
     ...data,
     cities: {
       ...data.cities,
-      [cityId]: { ...existing, ...updates },
+      [cityId]: next,
     },
   };
+};
+
+export const cycleCityStatus = (
+  data: TravelMapData,
+  cityId: string,
+): TravelMapData => {
+  const existing = data.cities[cityId];
+  if (!existing) return data;
+
+  const currentIndex = STATUS_CYCLE.indexOf(existing.status);
+  const nextStatus =
+    currentIndex >= 0
+      ? STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length]
+      : STATUS_CYCLE[0];
+
+  return updateCityEntry(data, cityId, { status: nextStatus });
 };
 
 export const unstampCityEntry = (
@@ -200,13 +202,7 @@ export const mergeCityData = (
   const result: CityData = { ...mine };
   for (const [cityId, entry] of Object.entries(theirs)) {
     if (result[cityId] && strategy === "keep-mine") continue;
-    result[cityId] = {
-      cityId,
-      countryCode: entry.countryCode,
-      name: entry.name,
-      lat: entry.lat,
-      lng: entry.lng,
-    };
+    result[cityId] = { ...entry };
   }
   return result;
 };

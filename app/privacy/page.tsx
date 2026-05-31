@@ -63,8 +63,8 @@ export default function PrivacyPolicy() {
               (visited / planning / want to visit)
             </li>
             <li>
-              The list of cities you&apos;ve stamped (city IDs only — no notes
-              or visit dates)
+              The list of cities you&apos;ve stamped, with their statuses
+              (visited / planning / want to visit)
             </li>
           </ul>
           <p className="text-muted-foreground mb-4">

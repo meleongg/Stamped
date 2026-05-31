@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Download } from "lucide-react";
 import { RefObject } from "react";
 import { toast } from "sonner";
+import { useTheme } from "../contexts/ThemeContext";
 import { copyMapToClipboard, exportMapAsPNG } from "../utils/mapExport";
 
 interface ExportButtonProps {
@@ -11,6 +12,8 @@ interface ExportButtonProps {
 }
 
 export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
+  const { theme } = useTheme();
+
   const handleExportMap = async () => {
     if (!svgRef.current) {
       toast.error("Map not ready for export. Please try again.");
@@ -18,7 +21,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
     }
 
     try {
-      await exportMapAsPNG(svgRef.current);
+      await exportMapAsPNG(svgRef.current, theme);
       toast.success("Map exported successfully!");
     } catch (error) {
       console.error("Export failed:", error);
@@ -33,7 +36,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ svgRef }) => {
     }
 
     try {
-      await copyMapToClipboard(svgRef.current);
+      await copyMapToClipboard(svgRef.current, theme);
       toast.success("Map copied to clipboard!");
     } catch (error) {
       console.error("Copy failed:", error);

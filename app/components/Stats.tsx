@@ -1,5 +1,6 @@
 "use client";
 
+import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "@/app/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapStats } from "@/app/utils/stats";
 
@@ -17,9 +18,11 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
     continentsCovered,
     firstVisitYear,
     latestVisitYear,
+    citiesMarkedCount,
+    citiesByStatus,
   } = stats;
 
-  if (stats.totalMarked === 0 && stats.citiesVisitedCount === 0) {
+  if (stats.totalMarked === 0 && citiesMarkedCount === 0) {
     return null;
   }
 
@@ -75,14 +78,35 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
           </div>
         )}
 
-        {stats.citiesVisitedCount > 0 && (
-          <div className="flex items-baseline justify-between">
-            <span className="text-muted-foreground text-sm">
-              Cities visited
-            </span>
-            <span className="text-foreground text-sm font-semibold">
-              {stats.citiesVisitedCount}
-            </span>
+        {citiesMarkedCount > 0 && (
+          <div>
+            <div className="text-muted-foreground mb-1.5 text-sm">
+              Cities marked
+            </div>
+            <ul className="space-y-1">
+              {ACTIVE_STATUSES.map((status) => {
+                const count = citiesByStatus[status];
+                if (count === 0) return null;
+                return (
+                  <li
+                    key={status}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <span
+                        className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: STATUS_COLORS[status] }}
+                        aria-hidden
+                      />
+                      {STATUS_LABELS[status]}
+                    </span>
+                    <span className="text-foreground font-semibold">
+                      {count}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
       </CardContent>

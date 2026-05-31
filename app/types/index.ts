@@ -23,13 +23,14 @@ export interface CityCatalogEntry {
   featurecla: string;
 }
 
-/** User-stamped city (visited only in v2). */
+/** User-stamped city with travel status (independent of country status). */
 export interface CityEntry {
   cityId: string;
   countryCode: string;
   name: string;
   lat: number;
   lng: number;
+  status: TravelStatus;
   /** ISO timestamp when the city was first stamped (local only). */
   stampedAt?: string;
   visitedAt?: string;

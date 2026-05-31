@@ -1,9 +1,17 @@
-import { MAP_DIMENSIONS } from "../constants";
+import { MAPVIEW_COLORS, MAP_DIMENSIONS } from "../constants";
+
+export type MapExportTheme = "light" | "dark";
+
+export const getMapExportBackground = (theme: MapExportTheme): string =>
+  theme === "dark" ? MAPVIEW_COLORS.oceanDark : MAPVIEW_COLORS.oceanLight;
 
 /**
- * Converts SVG element to canvas with white background
+ * Converts SVG element to canvas with the map ocean background.
  */
-const svgToCanvas = (svgElement: SVGSVGElement): Promise<HTMLCanvasElement> => {
+const svgToCanvas = (
+  svgElement: SVGSVGElement,
+  backgroundColor: string,
+): Promise<HTMLCanvasElement> => {
   return new Promise((resolve, reject) => {
     try {
       const canvas = document.createElement("canvas");
@@ -24,8 +32,7 @@ const svgToCanvas = (svgElement: SVGSVGElement): Promise<HTMLCanvasElement> => {
       // Create image and draw to canvas
       const img = new Image();
       img.onload = () => {
-        // Set white background
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, MAP_DIMENSIONS.WIDTH, MAP_DIMENSIONS.HEIGHT);
 
         // Draw the SVG image
@@ -75,12 +82,13 @@ const generateMapFilename = (): string => {
  */
 export const exportMapAsPNG = async (
   svgElement: SVGSVGElement,
+  theme: MapExportTheme = "light",
 ): Promise<void> => {
   if (typeof window === "undefined") {
     throw new Error("Window not available");
   }
 
-  const canvas = await svgToCanvas(svgElement);
+  const canvas = await svgToCanvas(svgElement, getMapExportBackground(theme));
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -100,12 +108,13 @@ export const exportMapAsPNG = async (
  */
 export const copyMapToClipboard = async (
   svgElement: SVGSVGElement,
+  theme: MapExportTheme = "light",
 ): Promise<void> => {
   if (typeof window === "undefined") {
     throw new Error("Window not available");
   }
 
-  const canvas = await svgToCanvas(svgElement);
+  const canvas = await svgToCanvas(svgElement, getMapExportBackground(theme));
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(async (blob) => {

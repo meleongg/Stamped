@@ -47,6 +47,7 @@ export default function Home() {
     cycleStatus,
     removeCountry,
     stampCity,
+    cycleCity,
     unstampCity,
     updateCity,
     getCountryData,
@@ -124,7 +125,11 @@ export default function Home() {
   const handleCityClick = (cityId: string) => {
     const city = getCityData(cityId);
     if (!city) return;
-    setSelectedCityId(cityId);
+    if (selectedCityId === cityId) {
+      cycleCity(cityId);
+    } else {
+      setSelectedCityId(cityId);
+    }
     mapRef.current?.focusCity(cityId, city.lat, city.lng);
   };
 
@@ -147,8 +152,12 @@ export default function Home() {
     ? `country-${selectedCountry}-${selectedStatus ?? "new"}`
     : "country-closed";
 
+  const selectedCityStatus = selectedCityId
+    ? getCityData(selectedCityId)?.status
+    : null;
+
   const citySidebarKey = selectedCityId
-    ? `city-${selectedCityId}`
+    ? `city-${selectedCityId}-${selectedCityStatus ?? "new"}`
     : "city-closed";
   const selectedCityData = selectedCityId ? getCityData(selectedCityId) : null;
 
@@ -164,7 +173,7 @@ export default function Home() {
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
-            isCityStamped={isCityStamped}
+            getCityStatus={(id) => getCityData(id)?.status ?? null}
             onSelectCountry={handleSearchSelectCountry}
             onSelectCity={handleSearchSelectCity}
           />

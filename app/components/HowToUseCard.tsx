@@ -6,8 +6,8 @@ import { useState } from "react";
 
 const HOW_TO_ITEMS = [
   "Tap or search for a country or city to select it",
-  "Click a country again to cycle through statuses",
-  "Stamp cities from search or the country sidebar; zoom in to see pins",
+  "Click again to cycle through visited, planning, or want to visit",
+  "Stamp cities from search or the country sidebar; zoom in to see colored pins",
   "Add notes and visit dates in the sidebar",
   "Stored on this device only. Share below the map to send a link to your phone or friends.",
 ] as const;

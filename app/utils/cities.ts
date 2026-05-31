@@ -1,5 +1,5 @@
 import catalog from "@/public/cities/populated-places.json";
-import { CityCatalogEntry, CityEntry } from "../types";
+import { CityCatalogEntry, CityEntry, TravelStatus } from "../types";
 
 export interface CityCatalog {
   meta: {
@@ -73,10 +73,12 @@ export const filterCityCatalogEntries = (
 
 export const catalogEntryToCityEntry = (
   entry: CityCatalogEntry,
-): Omit<CityEntry, "visitedAt" | "notes"> => ({
+  status: TravelStatus = "visited",
+): Omit<CityEntry, "visitedAt" | "notes" | "stampedAt"> => ({
   cityId: entry.id,
   countryCode: entry.countryCode,
   name: entry.name,
   lat: entry.lat,
   lng: entry.lng,
+  status,
 });

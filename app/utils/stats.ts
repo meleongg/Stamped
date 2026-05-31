@@ -17,21 +17,24 @@ export interface MapStats {
   totalContinents: number;
   firstVisitYear: number | null;
   latestVisitYear: number | null;
-  citiesVisitedCount: number;
+  citiesMarkedCount: number;
+  citiesByStatus: Record<TravelStatus, number>;
 }
 
-// Approximate number of sovereign countries; matches what most users expect
-// to see as "the denominator" (close to UN member count). The world-atlas
-// 110m topojson contains ~177 features, but we use the more recognizable 195
-// figure so percentages line up with what people remember.
 export const TOTAL_COUNTRIES_IN_WORLD = 195;
 
 const isStatus = (s: unknown): s is TravelStatus =>
   s === "visited" || s === "planning" || s === "want_to_visit" || s === "avoid";
 
+const emptyStatusCounts = (): Record<TravelStatus, number> => ({
+  visited: 0,
+  planning: 0,
+  want_to_visit: 0,
+  avoid: 0,
+});
+
 const parseYear = (entry: CountryEntry): number | null => {
   if (!entry.visitedAt) return null;
-  // ISO date string "YYYY-MM-DD" — we just want the year.
   const year = Number(entry.visitedAt.slice(0, 4));
   return Number.isFinite(year) && year > 1900 && year < 2200 ? year : null;
 };
@@ -39,12 +42,8 @@ const parseYear = (entry: CountryEntry): number | null => {
 export const computeStats = (data: MapData | TravelMapData): MapStats => {
   const countries = "countries" in data ? data.countries : (data as MapData);
   const cities = "cities" in data ? data.cities : {};
-  const byStatus: Record<TravelStatus, number> = {
-    visited: 0,
-    planning: 0,
-    want_to_visit: 0,
-    avoid: 0,
-  };
+  const byStatus = emptyStatusCounts();
+  const citiesByStatus = emptyStatusCounts();
 
   const visitedContinents = new Set<Continent>();
   let firstVisitYear: number | null = null;
@@ -71,12 +70,19 @@ export const computeStats = (data: MapData | TravelMapData): MapStats => {
     }
   }
 
+  for (const entry of Object.values(cities)) {
+    const status = entry.status;
+    if (!isStatus(status)) continue;
+    citiesByStatus[status] += 1;
+  }
+
   const visitedCount = byStatus.visited;
   const visitedPercent = Math.round(
     (visitedCount / TOTAL_COUNTRIES_IN_WORLD) * 100,
   );
 
   const continentsCovered = CONTINENTS.filter((c) => visitedContinents.has(c));
+  const citiesMarkedCount = Object.keys(cities).length;
 
   return {
     totalCountriesInWorld: TOTAL_COUNTRIES_IN_WORLD,
@@ -89,6 +95,7 @@ export const computeStats = (data: MapData | TravelMapData): MapStats => {
     totalContinents: TOTAL_CONTINENTS,
     firstVisitYear,
     latestVisitYear,
-    citiesVisitedCount: Object.keys(cities).length,
+    citiesMarkedCount,
+    citiesByStatus,
   };
 };

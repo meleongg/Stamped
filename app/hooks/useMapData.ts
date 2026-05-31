@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CountryEntry, MapData, TravelMapData } from "../types";
 import {
   cycleCountryStatus,
+  cycleCityStatus,
   localStorageStore,
   MapDataStore,
   removeCountryEntry,
@@ -79,6 +80,10 @@ export const useMapData = ({
     setTravelMapData((prev) => stampCityEntry(prev, cityId));
   };
 
+  const cycleCity = (cityId: string) => {
+    setTravelMapData((prev) => cycleCityStatus(prev, cityId));
+  };
+
   const unstampCity = (cityId: string) => {
     setTravelMapData((prev) => unstampCityEntry(prev, cityId));
     if (selectedCityId === cityId) {
@@ -88,7 +93,9 @@ export const useMapData = ({
 
   const updateCity = (
     cityId: string,
-    updates: Partial<Pick<import("../types").CityEntry, "visitedAt" | "notes">>,
+    updates: Partial<
+      Pick<import("../types").CityEntry, "status" | "visitedAt" | "notes">
+    >,
   ) => {
     setTravelMapData((prev) => updateCityEntry(prev, cityId, updates));
   };
@@ -145,6 +152,7 @@ export const useMapData = ({
     cycleStatus,
     removeCountry,
     stampCity,
+    cycleCity,
     unstampCity,
     updateCity,
     replaceTravelMapData,

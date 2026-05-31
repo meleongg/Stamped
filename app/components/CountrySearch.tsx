@@ -12,7 +12,7 @@ import { CountryFeature } from "../utils/geo";
 interface CountrySearchProps {
   countries: CountryFeature[];
   getCountryStatus: (countryCode: string) => TravelStatus | null;
-  isCityStamped?: (cityId: string) => boolean;
+  getCityStatus?: (cityId: string) => TravelStatus | null;
   onSelectCountry: (countryCode: string) => void;
   onSelectCity?: (city: CityCatalogEntry) => void;
   placeholder?: string;
@@ -28,7 +28,7 @@ type SearchResult =
 export const CountrySearch: React.FC<CountrySearchProps> = ({
   countries,
   getCountryStatus,
-  isCityStamped,
+  getCityStatus,
   onSelectCountry,
   onSelectCity,
   placeholder = "Search countries & cities...",
@@ -226,7 +226,8 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
               }
 
               const { city } = result;
-              const stamped = isCityStamped?.(city.id);
+              const cityStatus = getCityStatus?.(city.id);
+              const stamped = Boolean(cityStatus);
               return (
                 <li
                   key={`city-${city.id}`}
@@ -247,7 +248,9 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
                   <span
                     className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{
-                      backgroundColor: stamped ? "#0284c7" : "transparent",
+                      backgroundColor: stamped
+                        ? STATUS_COLORS[cityStatus!]
+                        : "transparent",
                       border: stamped ? "none" : "1px solid currentColor",
                       opacity: stamped ? 1 : 0.3,
                     }}
