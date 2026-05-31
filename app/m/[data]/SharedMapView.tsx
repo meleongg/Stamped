@@ -20,20 +20,40 @@ import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
-import { TravelMapData, TravelStatus } from "@/app/types";
+import { CityCatalogEntry, TravelMapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { decodeMap } from "@/app/utils/share";
 import { computeStats } from "@/app/utils/stats";
 import { localStorageStore, mergeTravelMapData } from "@/app/utils/storage";
+import { cn } from "@/lib/utils";
+
+type ImportStrategy = "keep-mine" | "use-theirs";
+
+const IMPORT_OPTIONS: {
+  id: ImportStrategy;
+  title: string;
+  description: string;
+}[] = [
+  {
+    id: "keep-mine",
+    title: "Add places I don't have",
+    description: "My existing entries stay the same.",
+  },
+  {
+    id: "use-theirs",
+    title: "Overwrite with their map",
+    description: "Conflicts use their map's data.",
+  },
+];
 
 interface SharedMapViewProps {
   encoded: string;
-  ownerName: string;
+  mapName: string;
 }
 
 export const SharedMapView: React.FC<SharedMapViewProps> = ({
   encoded,
-  ownerName,
+  mapName,
 }) => {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
   const [myData, setMyData] = useState<TravelMapData>({
@@ -86,6 +106,13 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   };
 
   const [importOpen, setImportOpen] = useState(false);
+  const [importStrategy, setImportStrategy] = useState<ImportStrategy | null>(
+    null,
+  );
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+
+  const getCityStatus = (cityId: string): TravelStatus | null =>
+    decoded.data.cities[cityId]?.status ?? null;
 
   const handleImport = async (strategy: "keep-mine" | "use-theirs") => {
     try {
@@ -100,18 +127,27 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
         Object.keys(merged.cities).length - Object.keys(mine.cities).length;
       toast.success(
         strategy === "keep-mine"
-          ? `Added ${addedCountries} ${addedCountries === 1 ? "country" : "countries"} and ${addedCities} ${addedCities === 1 ? "city" : "cities"} from ${ownerName}'s map`
-          : `Replaced overlapping entries with ${ownerName}'s map`,
+          ? `Added ${addedCountries} ${addedCountries === 1 ? "country" : "countries"} and ${addedCities} ${addedCities === 1 ? "city" : "cities"} from ${mapName}`
+          : `Replaced overlapping entries with ${mapName}`,
       );
       track("share_link_imported", { strategy, added: addedCountries });
+      setImportStrategy(null);
       setImportOpen(false);
     } catch {
       toast.error("Couldn't import. Please try again.");
     }
   };
 
-  const handleSearchSelect = (countryCode: string) => {
+  const handleSearchSelectCountry = (countryCode: string) => {
+    if (!getCountryStatus(countryCode)) return;
+    setSelectedCityId(null);
     mapRef.current?.focusCountry(countryCode);
+  };
+
+  const handleSearchSelectCity = (city: CityCatalogEntry) => {
+    if (!getCityStatus(city.id)) return;
+    setSelectedCityId(city.id);
+    mapRef.current?.focusCity(city.id, city.lat, city.lng);
   };
 
   return (
@@ -139,7 +175,13 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                 Compare with my map
               </Link>
             </Button>
-            <Dialog open={importOpen} onOpenChange={setImportOpen}>
+            <Dialog
+              open={importOpen}
+              onOpenChange={(open) => {
+                setImportOpen(open);
+                if (!open) setImportStrategy(null);
+              }}
+            >
               <DialogTrigger asChild>
                 <Button
                   variant="default"
@@ -149,46 +191,66 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                   Import to my map
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Import {ownerName}&apos;s map?</DialogTitle>
+              <DialogContent className="gap-5">
+                <DialogHeader className="gap-2 pr-8">
+                  <DialogTitle>Import from {mapName}?</DialogTitle>
                   <DialogDescription>
                     Pick what to do when a country or city appears on both maps.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col gap-3">
+                <div
+                  className="flex flex-col gap-3"
+                  role="radiogroup"
+                  aria-label="Import strategy"
+                >
+                  {IMPORT_OPTIONS.map((option) => {
+                    const selected = importStrategy === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setImportStrategy(option.id)}
+                        className={cn(
+                          "h-auto w-full cursor-pointer rounded-md border px-4 py-3.5 text-left whitespace-normal transition-colors",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:bg-accent hover:text-accent-foreground",
+                        )}
+                      >
+                        <div className="flex w-full flex-col gap-1">
+                          <span className="font-semibold">{option.title}</span>
+                          <span
+                            className={cn(
+                              "text-xs",
+                              selected ? "opacity-90" : "text-muted-foreground",
+                            )}
+                          >
+                            {option.description}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <DialogFooter className="gap-2 pt-0 sm:justify-between">
+                  <Button
+                    variant="ghost"
+                    className="cursor-pointer"
+                    onClick={() => setImportOpen(false)}
+                  >
+                    Cancel
+                  </Button>
                   <Button
                     variant="default"
-                    className="w-full justify-start"
-                    onClick={() => handleImport("keep-mine")}
+                    className="cursor-pointer"
+                    disabled={!importStrategy}
+                    onClick={() => {
+                      if (importStrategy) void handleImport(importStrategy);
+                    }}
                   >
-                    <div className="flex flex-col items-start">
-                      <span className="font-semibold">
-                        Add places I don&apos;t have
-                      </span>
-                      <span className="text-xs opacity-80">
-                        My existing entries stay the same.
-                      </span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => handleImport("use-theirs")}
-                  >
-                    <div className="flex flex-col items-start">
-                      <span className="font-semibold">
-                        Overwrite with their map
-                      </span>
-                      <span className="text-xs opacity-80">
-                        Conflicts use {ownerName}&apos;s data.
-                      </span>
-                    </div>
-                  </Button>
-                </div>
-                <DialogFooter>
-                  <Button variant="ghost" onClick={() => setImportOpen(false)}>
-                    Cancel
+                    Continue
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -208,8 +270,10 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
           <CountrySearch
             countries={countries}
             getCountryStatus={getCountryStatus}
-            onSelectCountry={handleSearchSelect}
-            placeholder={`Search ${ownerName}'s countries...`}
+            getCityStatus={getCityStatus}
+            onSelectCountry={handleSearchSelectCountry}
+            onSelectCity={handleSearchSelectCity}
+            placeholder={`Search countries & cities in ${mapName}…`}
           />
           <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
@@ -217,6 +281,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
                 ref={mapRef}
                 getCountryStatus={getCountryStatus}
                 stampedCities={sharedCities}
+                selectedCityId={selectedCityId}
                 countries={countries}
                 isLoading={false}
                 readonly

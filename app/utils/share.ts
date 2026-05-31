@@ -58,6 +58,18 @@ export const isValidName = (raw: string): boolean => {
   return cleaned.length > 0;
 };
 
+/** Heading on shared map pages — the user-chosen map name as-is. */
+export const formatSharedMapHeading = (mapName: string): string => mapName;
+
+/** Browser tab / social metadata title. */
+export const formatSharedMapPageTitle = (mapName: string): string =>
+  `${mapName} · Stamped`;
+
+export const formatShareNativeTitle = (mapName: string): string => mapName;
+
+export const formatShareNativeText = (mapName: string): string =>
+  `Check out "${mapName}" on Stamped`;
+
 const toBase64Url = (input: string): string => {
   const bytes =
     typeof Buffer !== "undefined"

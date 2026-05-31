@@ -1,45 +1,62 @@
 "use client";
 
+import { MapView } from "@/app/components/MapView";
+import { STATUS_COLORS } from "@/app/constants";
+import { MapData, TravelMapData, TravelStatus } from "@/app/types";
+import {
+  citiesInCountry,
+  computeCityOverlap,
+  OverlapCategory,
+} from "@/app/utils/compare";
+import { CountryFeature, loadCountries } from "@/app/utils/geo";
+import {
+  importTheirCities,
+  localStorageStore,
+  mergeMapData,
+} from "@/app/utils/storage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Home } from "lucide-react";
+import { Home, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MapView } from "@/app/components/MapView";
-import { MapData, TravelMapData, TravelStatus } from "@/app/types";
-import { CountryFeature, loadCountries } from "@/app/utils/geo";
-import { localStorageStore, mergeMapData } from "@/app/utils/storage";
 
 interface CompareViewProps {
   theirEncoded: string;
-  theirName: string;
+  theirMapName: string;
   theirData: TravelMapData;
 }
 
-type OverlayCategory = "both" | "onlyMine" | "onlyTheirs" | "neither";
+type CountryOverlayCategory = OverlapCategory | "neither";
 
-const CATEGORY_COLORS: Record<OverlayCategory, string> = {
-  both: "#22c55e", // green
-  onlyMine: "#3b82f6", // blue
-  onlyTheirs: "#f59e0b", // amber
-  neither: "#94a3b8", // slate-400 — unmarked / neither (matches light map)
+const CATEGORY_COLORS: Record<CountryOverlayCategory, string> = {
+  both: "#22c55e",
+  onlyMine: "#3b82f6",
+  onlyTheirs: "#f59e0b",
+  neither: "#94a3b8",
 };
 
-const CATEGORY_LABELS: Record<OverlayCategory, string> = {
+const CATEGORY_LABELS: Record<OverlapCategory, string> = {
   both: "Both of us",
   onlyMine: "Only me",
   onlyTheirs: "Only them",
-  neither: "Neither",
 };
+
+const OVERLAP_CATEGORIES: OverlapCategory[] = [
+  "both",
+  "onlyMine",
+  "onlyTheirs",
+];
 
 const isVisited = (entry: { status: TravelStatus } | undefined) =>
   entry?.status === "visited";
 
+const DRILLDOWN_MAX = 8;
+
 export const CompareView: React.FC<CompareViewProps> = ({
   theirEncoded,
-  theirName,
+  theirMapName,
   theirData,
 }) => {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
@@ -48,6 +65,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
     cities: {},
   });
   const [mineLoading, setMineLoading] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +79,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
     };
   }, []);
 
-  const getCategory = (countryCode: string): OverlayCategory => {
+  const getCountryCategory = (countryCode: string): CountryOverlayCategory => {
     const m = isVisited(mine.countries[countryCode]);
     const t = isVisited(theirData.countries[countryCode]);
     if (m && t) return "both";
@@ -71,11 +89,11 @@ export const CompareView: React.FC<CompareViewProps> = ({
   };
 
   const getCountryFill = (countryCode: string): string => {
-    return CATEGORY_COLORS[getCategory(countryCode)];
+    return CATEGORY_COLORS[getCountryCategory(countryCode)];
   };
 
-  const stats = useMemo(() => {
-    const result: Record<OverlayCategory, number> = {
+  const countryStats = useMemo(() => {
+    const result: Record<CountryOverlayCategory, number> = {
       both: 0,
       onlyMine: 0,
       onlyTheirs: 0,
@@ -86,13 +104,18 @@ export const CompareView: React.FC<CompareViewProps> = ({
       ...Object.keys(theirData.countries),
     ]);
     for (const code of allCodes) {
-      const cat = getCategory(code);
+      const cat = getCountryCategory(code);
       if (cat !== "neither") result[cat]++;
     }
     return result;
   }, [mine, theirData]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const uniqueToThem = useMemo(() => {
+  const cityOverlap = useMemo(
+    () => computeCityOverlap(mine.cities, theirData.cities),
+    [mine.cities, theirData.cities],
+  );
+
+  const uniqueCountriesToThem = useMemo(() => {
     return Object.entries(theirData.countries)
       .filter(
         ([code, entry]) =>
@@ -101,24 +124,66 @@ export const CompareView: React.FC<CompareViewProps> = ({
       .map(([code]) => code);
   }, [mine, theirData]);
 
-  const handleImportTheirUnique = async () => {
+  const selectedCountryName = useMemo(() => {
+    if (!selectedCountry) return null;
+    return (
+      countries.find((c) => String(c.id) === selectedCountry)?.properties
+        .name ?? selectedCountry
+    );
+  }, [selectedCountry, countries]);
+
+  const drilldown = useMemo(() => {
+    if (!selectedCountry) return null;
+    const mineInCountry = citiesInCountry(mine.cities, selectedCountry);
+    const theirsInCountry = citiesInCountry(theirData.cities, selectedCountry);
+    const bothIds = new Set(
+      mineInCountry
+        .filter((c) => theirData.cities[c.cityId])
+        .map((c) => c.cityId),
+    );
+    return { mineInCountry, theirsInCountry, bothIds };
+  }, [selectedCountry, mine.cities, theirData.cities]);
+
+  const handleCountryClick = (countryCode: string) => {
+    setSelectedCountry((prev) => (prev === countryCode ? null : countryCode));
+  };
+
+  const handleImportTheirUniqueCountries = async () => {
     try {
       const toAdd: MapData = {};
-      for (const code of uniqueToThem) {
+      for (const code of uniqueCountriesToThem) {
         toAdd[code] = { countryCode: code, status: "want_to_visit" };
       }
       const merged = mergeMapData(mine.countries, toAdd, "keep-mine");
-      await Promise.resolve(
-        localStorageStore.save({ ...mine, countries: merged }),
-      );
-      setMine({ ...mine, countries: merged });
+      const next = { ...mine, countries: merged };
+      await Promise.resolve(localStorageStore.save(next));
+      setMine(next);
       toast.success(
-        `Added ${uniqueToThem.length} ${
-          uniqueToThem.length === 1 ? "country" : "countries"
+        `Added ${uniqueCountriesToThem.length} ${
+          uniqueCountriesToThem.length === 1 ? "country" : "countries"
         } as "want to visit"`,
       );
     } catch {
       toast.error("Couldn't import. Please try again.");
+    }
+  };
+
+  const handleImportTheirUniqueCities = async () => {
+    const ids = cityOverlap.onlyTheirs.map((c) => c.cityId);
+    if (ids.length === 0) return;
+    try {
+      const toImport: typeof theirData.cities = {};
+      for (const c of cityOverlap.onlyTheirs) {
+        toImport[c.cityId] = c;
+      }
+      const next = importTheirCities(mine, toImport, "planning");
+      await Promise.resolve(localStorageStore.save(next));
+      setMine(next);
+      toast.success(
+        `Added ${ids.length} ${ids.length === 1 ? "city" : "cities"} as planning`,
+      );
+    } catch {
+      toast.error("Couldn't import cities. Please try again.");
     }
   };
 
@@ -130,22 +195,58 @@ export const CompareView: React.FC<CompareViewProps> = ({
     );
   }
 
+  const renderOverlapRows = (stats: Record<OverlapCategory, number>) =>
+    OVERLAP_CATEGORIES.map((cat) => (
+      <div key={cat} className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div
+            className="h-4 w-4 rounded-full"
+            style={{ backgroundColor: CATEGORY_COLORS[cat] }}
+          />
+          <span className="text-muted-foreground text-sm">
+            {CATEGORY_LABELS[cat]}
+          </span>
+        </div>
+        <Badge variant="secondary">{stats[cat]}</Badge>
+      </div>
+    ));
+
+  const renderCityListItem = (
+    city: { cityId: string; name: string; status: TravelStatus },
+    isBoth: boolean,
+  ) => (
+    <li key={city.cityId} className="flex items-center gap-2 text-sm">
+      <span
+        className="inline-block h-2 w-2 shrink-0 rounded-full"
+        style={{ backgroundColor: STATUS_COLORS[city.status] }}
+        aria-hidden
+      />
+      <span
+        className={isBoth ? "text-foreground font-medium" : "text-foreground"}
+      >
+        {city.name}
+        {isBoth && (
+          <span className="text-muted-foreground ml-1 text-xs">· both</span>
+        )}
+      </span>
+    </li>
+  );
+
   return (
     <>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-foreground text-3xl font-bold">
-            You vs {theirName}
+            Your map vs {theirMapName}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Visited-country overlap. Plans and want-to-visit aren&apos;t counted
-            here.
+            Click a country to compare cities there.
           </p>
         </div>
         <Button asChild variant="ghost">
           <Link href={`/m/${theirEncoded}`} className="flex items-center gap-2">
             <Home className="h-4 w-4" />
-            Back to {theirName}&apos;s map
+            Back to {theirMapName}
           </Link>
         </Button>
       </div>
@@ -154,33 +255,93 @@ export const CompareView: React.FC<CompareViewProps> = ({
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Card className="border-border bg-card p-4">
             <CardHeader className="pb-2">
-              <h3 className="text-foreground text-lg font-semibold">Overlap</h3>
+              <h3 className="text-foreground text-lg font-semibold">
+                Countries
+              </h3>
+              <p className="text-muted-foreground text-xs">
+                Visited only · matches map colors
+              </p>
             </CardHeader>
             <CardContent className="space-y-2">
-              {(["both", "onlyMine", "onlyTheirs"] as OverlayCategory[]).map(
-                (cat) => (
-                  <div key={cat} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: CATEGORY_COLORS[cat] }}
-                      />
-                      <span className="text-muted-foreground text-sm">
-                        {cat === "onlyMine"
-                          ? "Only me"
-                          : cat === "onlyTheirs"
-                            ? `Only ${theirName}`
-                            : CATEGORY_LABELS[cat]}
-                      </span>
-                    </div>
-                    <Badge variant="secondary">{stats[cat]}</Badge>
-                  </div>
-                ),
-              )}
+              {renderOverlapRows(countryStats)}
             </CardContent>
           </Card>
 
-          {uniqueToThem.length > 0 && (
+          {drilldown && selectedCountryName && (
+            <Card className="border-border bg-card p-4">
+              <CardHeader className="flex flex-row items-start justify-between pb-2">
+                <div>
+                  <h3 className="text-foreground text-lg font-semibold">
+                    Cities in {selectedCountryName}
+                  </h3>
+                  <p className="text-muted-foreground text-xs">
+                    Tap the country again on the map to deselect
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCountry(null)}
+                  className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
+                  aria-label="Clear country selection"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
+                    You
+                  </p>
+                  {drilldown.mineInCountry.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">None</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {drilldown.mineInCountry
+                        .slice(0, DRILLDOWN_MAX)
+                        .map((city) =>
+                          renderCityListItem(
+                            city,
+                            drilldown.bothIds.has(city.cityId),
+                          ),
+                        )}
+                      {drilldown.mineInCountry.length > DRILLDOWN_MAX && (
+                        <li className="text-muted-foreground text-xs">
+                          +{drilldown.mineInCountry.length - DRILLDOWN_MAX} more
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
+                    Their map
+                  </p>
+                  {drilldown.theirsInCountry.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">None</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {drilldown.theirsInCountry
+                        .slice(0, DRILLDOWN_MAX)
+                        .map((city) =>
+                          renderCityListItem(
+                            city,
+                            drilldown.bothIds.has(city.cityId),
+                          ),
+                        )}
+                      {drilldown.theirsInCountry.length > DRILLDOWN_MAX && (
+                        <li className="text-muted-foreground text-xs">
+                          +{drilldown.theirsInCountry.length - DRILLDOWN_MAX}{" "}
+                          more
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {uniqueCountriesToThem.length > 0 && (
             <Card className="border-border bg-card p-4">
               <CardHeader className="pb-2">
                 <h3 className="text-foreground text-lg font-semibold">
@@ -189,16 +350,42 @@ export const CompareView: React.FC<CompareViewProps> = ({
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <p className="text-muted-foreground text-sm">
-                  {theirName} has been to {uniqueToThem.length}{" "}
-                  {uniqueToThem.length === 1 ? "country" : "countries"} you
-                  haven&apos;t. Add them to your &quot;want to visit&quot; list?
+                  Their map includes {uniqueCountriesToThem.length}{" "}
+                  {uniqueCountriesToThem.length === 1 ? "country" : "countries"}{" "}
+                  you haven&apos;t visited. Add them as want to visit?
                 </p>
                 <Button
                   variant="default"
                   className="w-full cursor-pointer"
-                  onClick={handleImportTheirUnique}
+                  onClick={handleImportTheirUniqueCountries}
                 >
-                  Add {uniqueToThem.length} to my list
+                  Add {uniqueCountriesToThem.length}{" "}
+                  {uniqueCountriesToThem.length === 1 ? "country" : "countries"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {cityOverlap.onlyTheirs.length > 0 && (
+            <Card className="border-border bg-card p-4">
+              <CardHeader className="pb-2">
+                <h3 className="text-foreground text-lg font-semibold">
+                  Their cities
+                </h3>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <p className="text-muted-foreground text-sm">
+                  Their map has {cityOverlap.onlyTheirs.length} stamped{" "}
+                  {cityOverlap.onlyTheirs.length === 1 ? "city" : "cities"} you
+                  don&apos;t. Add as planning?
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full cursor-pointer"
+                  onClick={handleImportTheirUniqueCities}
+                >
+                  Add {cityOverlap.onlyTheirs.length}{" "}
+                  {cityOverlap.onlyTheirs.length === 1 ? "city" : "cities"}
                 </Button>
               </CardContent>
             </Card>
@@ -211,6 +398,8 @@ export const CompareView: React.FC<CompareViewProps> = ({
               <MapView
                 getCountryStatus={() => null}
                 getCountryFill={(code) => getCountryFill(code)}
+                onCountryClick={handleCountryClick}
+                selectedCountry={selectedCountry}
                 stampedCities={Object.values(theirData.cities)}
                 countries={countries}
                 isLoading={false}

@@ -196,7 +196,7 @@ export default async function OpenGraphImage({
               display: "flex",
             }}
           >
-            {name}&apos;s travel map
+            {name}
           </div>
           <div
             style={{

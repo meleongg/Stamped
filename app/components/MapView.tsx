@@ -380,7 +380,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                     : "cursor-pointer transition-colors duration-150"
                 }
                 onClick={(e) => {
-                  if (readonly || !onCountryClick) return;
+                  if (!onCountryClick) return;
                   e.stopPropagation();
                   onCountryClick(countryCode);
                 }}

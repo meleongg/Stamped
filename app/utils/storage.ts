@@ -177,6 +177,23 @@ export const unstampCityEntry = (
   return { ...data, cities };
 };
 
+/** Stamp their cities missing from mine, defaulting to planning. */
+export const importTheirCities = (
+  data: TravelMapData,
+  theirCities: CityData,
+  defaultStatus: TravelMapData["cities"][string]["status"] = "planning",
+): TravelMapData => {
+  let next = data;
+  for (const cityId of Object.keys(theirCities)) {
+    if (next.cities[cityId]) continue;
+    next = stampCityEntry(next, cityId);
+    if (defaultStatus !== "visited") {
+      next = updateCityEntry(next, cityId, { status: defaultStatus });
+    }
+  }
+  return next;
+};
+
 export const mergeMapData = (
   mine: MapData,
   theirs: MapData,

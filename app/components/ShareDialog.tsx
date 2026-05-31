@@ -12,17 +12,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { track } from "@vercel/analytics";
-import { Check, Copy, Share2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Copy, Mail, MessageCircle, Share2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TravelMapData } from "../types";
 import {
   SHARE_NAME_MAX,
   buildShareUrl,
   encodeMap,
+  formatShareNativeText,
+  formatShareNativeTitle,
   isValidName,
   sanitizeName,
 } from "../utils/share";
+import {
+  getDesktopShareActions,
+  shareLinkNative,
+  shouldUseNativeShare,
+} from "../utils/shareLink";
 
 const SHARE_NAME_STORAGE_KEY = "shareName";
 const SHARE_NAME_EXAMPLE = "My Awesome Map";
@@ -33,15 +40,13 @@ interface ShareDialogProps {
 
 export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
   const [open, setOpen] = useState(false);
-  // Lazy init: read remembered name from localStorage once on first render.
-  // Safe on the server (returns "") because the dialog content lives in a
-  // Radix portal that isn't rendered until the user opens the dialog,
-  // which always happens client-side post-hydration.
   const [name, setName] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(SHARE_NAME_STORAGE_KEY) ?? "";
   });
   const [copied, setCopied] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   const trimmedName = sanitizeName(name);
   const countryCount = Object.keys(travelMapData.countries).length;
@@ -59,6 +64,25 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
     }
   }, [canShare, trimmedName, travelMapData]);
 
+  const sharePayload = useMemo(
+    () => ({
+      url: shareUrl,
+      title: formatShareNativeTitle(trimmedName),
+      text: formatShareNativeText(trimmedName),
+    }),
+    [shareUrl, trimmedName],
+  );
+
+  const useNativeShare = useMemo(
+    () => (shareUrl ? shouldUseNativeShare(shareUrl) : false),
+    [shareUrl],
+  );
+
+  const desktopShareActions = useMemo(
+    () => (shareUrl ? getDesktopShareActions(sharePayload) : []),
+    [shareUrl, sharePayload],
+  );
+
   const ogPreviewSrc = useMemo(() => {
     if (!canShare || typeof window === "undefined") return "";
     try {
@@ -69,11 +93,15 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
     }
   }, [canShare, trimmedName, travelMapData]);
 
+  const persistShareName = () => {
+    window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
+  };
+
   const handleCopy = async () => {
     if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
+      persistShareName();
       setCopied(true);
       toast.success("Link copied to clipboard");
       track("share_link_copied", { countries: countryCount });
@@ -83,29 +111,66 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
     }
   };
 
-  const handleShareNative = async () => {
+  const handleShareViaClick = async () => {
     if (!shareUrl) return;
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      try {
-        await navigator.share({
-          title: `${trimmedName}'s travel map`,
-          text: `Check out ${trimmedName}'s travel map`,
-          url: shareUrl,
-        });
-        window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
+
+    if (useNativeShare) {
+      const result = await shareLinkNative(sharePayload);
+      if (result === "shared") {
+        persistShareName();
+        toast.success("Shared successfully");
         track("share_link_native", { countries: countryCount });
-      } catch {
-        // User cancelled native share — no-op.
+      } else if (result === "unavailable") {
+        setShareMenuOpen(true);
       }
-    } else {
-      void handleCopy();
+      return;
+    }
+
+    setShareMenuOpen((open) => !open);
+  };
+
+  const handleDesktopShareAction = async (
+    action: (typeof desktopShareActions)[number],
+  ) => {
+    if (action.id === "copy") {
+      await handleCopy();
+      setShareMenuOpen(false);
+      return;
+    }
+    if (action.href) {
+      window.open(action.href, "_blank", "noopener,noreferrer");
+      persistShareName();
+      toast.success(`Opening ${action.label}…`);
+      setShareMenuOpen(false);
     }
   };
 
   const totalCountries = countryCount;
 
+  useEffect(() => {
+    if (!shareMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(event.target as Node)
+      ) {
+        setShareMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [shareMenuOpen]);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setShareMenuOpen(false);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           variant="default"
@@ -132,9 +197,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="share-name">
-              Map name
-              <span className="ml-1 text-red-500">*</span>
+            <Label htmlFor="share-name" className="w-fit gap-0">
+              Map name<span className="text-red-500">*</span>
             </Label>
             <Input
               id="share-name"
@@ -146,8 +210,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
               className="w-full"
             />
             <p className="text-muted-foreground text-xs">
-              Shown as &quot;{trimmedName || SHARE_NAME_EXAMPLE}&apos;s travel
-              map&quot; on the share page.
+              Shown as the title at the top of the share page.
             </p>
           </div>
 
@@ -175,7 +238,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
                     onClick={handleCopy}
                     variant="outline"
                     size="icon"
-                    className="shrink-0"
+                    className="shrink-0 cursor-pointer"
                     aria-label="Copy share link"
                   >
                     {copied ? (
@@ -206,14 +269,51 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
                 </div>
               )}
 
-              <Button
-                onClick={handleShareNative}
-                variant="secondary"
-                className="flex w-full items-center justify-center gap-2"
-              >
-                <Share2 className="h-4 w-4" />
-                Share via…
-              </Button>
+              <div ref={shareMenuRef} className="relative">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2"
+                  onClick={handleShareViaClick}
+                  aria-expanded={shareMenuOpen}
+                  aria-haspopup="menu"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share via…
+                </Button>
+                {!useNativeShare && shareMenuOpen && (
+                  <div className="border-border bg-popover absolute top-full right-0 left-0 z-50 mt-1 overflow-hidden rounded-md border p-1 shadow-md">
+                    <ul className="flex flex-col" role="menu">
+                      {desktopShareActions.map((action) => (
+                        <li key={action.id} role="none">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="hover:bg-accent hover:text-accent-foreground flex w-full cursor-pointer items-center gap-2 rounded-sm px-3 py-2.5 text-sm transition-colors"
+                            onClick={() => handleDesktopShareAction(action)}
+                          >
+                            {action.id === "copy" && (
+                              <Copy className="h-4 w-4 shrink-0 opacity-70" />
+                            )}
+                            {action.id === "email" && (
+                              <Mail className="h-4 w-4 shrink-0 opacity-70" />
+                            )}
+                            {action.id === "whatsapp" && (
+                              <MessageCircle className="h-4 w-4 shrink-0 opacity-70" />
+                            )}
+                            {action.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              {!useNativeShare && (
+                <p className="text-muted-foreground text-center text-xs">
+                  Pick how to send your link
+                </p>
+              )}
             </>
           )}
         </div>

@@ -1,7 +1,12 @@
 import { STATUS_LABELS } from "@/app/constants";
 import { SharedMapView } from "@/app/m/[data]/SharedMapView";
 import { TravelStatus } from "@/app/types";
-import { InvalidShareLinkError, decodeMap } from "@/app/utils/share";
+import {
+  InvalidShareLinkError,
+  decodeMap,
+  formatSharedMapHeading,
+  formatSharedMapPageTitle,
+} from "@/app/utils/share";
 import { Button } from "@/components/ui/button";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -31,7 +36,7 @@ export async function generateMetadata({
       total === 0 && cityCount === 0
         ? "Track your travels on a world map"
         : `${visited} visited · ${planning} planning · ${total} total${cityCount > 0 ? ` · ${cityCount} cities` : ""}`;
-    const title = `${decoded.name}'s travel map`;
+    const title = formatSharedMapPageTitle(decoded.name);
     return {
       title,
       description: subtitle,
@@ -98,7 +103,7 @@ export default async function SharedMapPage({ params }: PageProps) {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <h1 className="text-foreground text-3xl font-bold">
-          {decoded.name}&apos;s travel map
+          {formatSharedMapHeading(decoded.name)}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {total === 0 && cityCount === 0
@@ -114,7 +119,7 @@ export default async function SharedMapPage({ params }: PageProps) {
         </p>
       </div>
 
-      <SharedMapView encoded={encoded} ownerName={decoded.name} />
+      <SharedMapView encoded={encoded} mapName={decoded.name} />
     </div>
   );
 }
