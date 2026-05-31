@@ -1,5 +1,6 @@
 import catalog from "@/public/cities/populated-places.json";
 import { CityCatalogEntry, CityEntry, TravelStatus } from "../types";
+import { countryCodesMatch, normalizeCountryCode } from "./countryCodes";
 
 export interface CityCatalog {
   meta: {
@@ -10,6 +11,7 @@ export interface CityCatalog {
     generatedAt: string;
     count: number;
   };
+  countryNames?: Record<string, string>;
   cities: CityCatalogEntry[];
 }
 
@@ -18,7 +20,10 @@ let byId: Map<string, CityCatalogEntry> | null = null;
 
 export const loadCityCatalog = (): CityCatalogEntry[] => {
   if (cached) return cached;
-  cached = (catalog as CityCatalog).cities;
+  cached = (catalog as CityCatalog).cities.map((c) => ({
+    ...c,
+    countryCode: normalizeCountryCode(c.countryCode),
+  }));
   return cached;
 };
 
@@ -32,7 +37,9 @@ export const getCityById = (cityId: string): CityCatalogEntry | undefined => {
 };
 
 export const getCitiesByCountry = (countryCode: string): CityCatalogEntry[] => {
-  return loadCityCatalog().filter((c) => c.countryCode === countryCode);
+  return loadCityCatalog().filter((c) =>
+    countryCodesMatch(c.countryCode, countryCode),
+  );
 };
 
 export const normalizeSearch = (s: string): string =>

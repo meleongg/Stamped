@@ -80,9 +80,7 @@ export const Stats: React.FC<StatsProps> = ({ stats }) => {
 
         {citiesMarkedCount > 0 && (
           <div>
-            <div className="text-muted-foreground mb-1.5 text-sm">
-              Cities marked
-            </div>
+            <div className="text-muted-foreground mb-1.5 text-sm">Cities</div>
             <ul className="space-y-1">
               {ACTIVE_STATUSES.map((status) => {
                 const count = citiesByStatus[status];

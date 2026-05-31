@@ -6,7 +6,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { STATUS_COLORS } from "../constants";
 import { CityCatalogEntry, TravelStatus } from "../types";
 import { normalizeSearch, searchCityCatalog } from "../utils/cities";
-import { getCountryNameByCode } from "../utils/countryNames";
+import {
+  getCountryNameByCode,
+  getCountryNameForCity,
+} from "../utils/countryNames";
 import { CountryFeature } from "../utils/geo";
 
 interface CountrySearchProps {
@@ -260,7 +263,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
                     {city.name}
                     <span className="text-muted-foreground">
                       {" "}
-                      · {getCountryNameByCode(city.countryCode)}
+                      · {getCountryNameForCity(city)}
                     </span>
                   </span>
                 </li>

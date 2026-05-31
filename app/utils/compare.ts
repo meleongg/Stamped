@@ -1,4 +1,5 @@
 import { CityData, CityEntry } from "../types";
+import { countryCodesMatch } from "./countryCodes";
 
 export type OverlapCategory = "both" | "onlyMine" | "onlyTheirs";
 
@@ -58,6 +59,6 @@ export const citiesInCountry = (
 ): CityEntry[] => {
   const entries = Array.isArray(cities) ? cities : Object.values(cities);
   return entries
-    .filter((c) => c.countryCode === countryCode)
+    .filter((c) => countryCodesMatch(c.countryCode, countryCode))
     .sort((a, b) => a.name.localeCompare(b.name));
 };

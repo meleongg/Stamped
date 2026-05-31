@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { CityEntry, TravelStatus } from "../types";
-import { getCountryNameByCode } from "../utils/countryNames";
+import { getCountryNameForCity } from "../utils/countryNames";
 
 interface CitySidebarProps {
   cityId: string | null;
@@ -75,7 +75,7 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
     return null;
   }
 
-  const countryName = getCountryNameByCode(cityData.countryCode);
+  const countryName = getCountryNameForCity(cityData);
 
   const handleSave = () => {
     onUpdateCity(cityId, {

@@ -17,6 +17,8 @@ export interface CityCatalogEntry {
   id: string; // Natural Earth NE_ID
   name: string;
   countryCode: string;
+  /** From Natural Earth admin-0; used when the simplified map has no polygon. */
+  countryName: string;
   lat: number;
   lng: number;
   scalerank: number;

@@ -10,6 +10,7 @@ import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
 import { CityCatalogEntry, CityEntry } from "@/app/types";
+import { countryCodesMatch } from "@/app/utils/countryCodes";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { computeStats } from "@/app/utils/stats";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -72,7 +73,7 @@ export default function Home() {
   const stampedCitiesInCountry = useMemo(() => {
     if (!selectedCountry) return [];
     return stampedCities
-      .filter((c) => c.countryCode === selectedCountry)
+      .filter((c) => countryCodesMatch(c.countryCode, selectedCountry))
       .sort(compareCitiesByStampOrder);
   }, [selectedCountry, stampedCities]);
 

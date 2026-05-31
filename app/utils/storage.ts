@@ -1,5 +1,6 @@
 import { STATUS_CYCLE, STORAGE_KEYS } from "../constants";
 import { catalogEntryToCityEntry, getCityById } from "./cities";
+import { countryCodesMatch } from "./countryCodes";
 import {
   CityData,
   CityEntry,
@@ -117,8 +118,12 @@ export const stampCityEntry = (
   if (!catalog) return data;
 
   const existing = data.cities[catalogId];
+  const countryStatus = Object.entries(data.countries).find(([code]) =>
+    countryCodesMatch(code, catalog.countryCode),
+  )?.[1]?.status;
+  const defaultStatus = existing?.status ?? countryStatus ?? "visited";
   const entry: CityEntry = {
-    ...catalogEntryToCityEntry(catalog, existing?.status ?? "visited"),
+    ...catalogEntryToCityEntry(catalog, defaultStatus),
     stampedAt: existing?.stampedAt ?? new Date().toISOString(),
     visitedAt: existing?.visitedAt,
     notes: existing?.notes,

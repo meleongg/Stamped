@@ -311,7 +311,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
         {/* Cities */}
         {(stampedCities.length > 0 || unstampedCatalog.length > 0) && (
           <div className="mb-6">
-            <Label className="mb-2">Cities visited</Label>
+            <Label className="mb-2">Cities</Label>
             {stampedCities.length > 0 && (
               <ul className="mb-3 space-y-1">
                 {stampedCities.map((city) => (

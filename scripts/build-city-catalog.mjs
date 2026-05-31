@@ -18,18 +18,37 @@ const COUNTRIES_PATH = path.join(SOURCES, "ne_10m_admin_0_countries.geojson");
 /** Admin-0 capitals + SCALERANK <= 5 (~1,140 major places). */
 const MAX_SCALERANK = 5;
 
-function buildIsoA2ToNumeric(countriesGeo) {
-  const map = new Map();
+const normalizeCountryCode = (code) => {
+  const trimmed = String(code).trim();
+  if (/^\d+$/.test(trimmed)) {
+    return trimmed.padStart(3, "0");
+  }
+  return trimmed;
+};
+
+function buildIsoA2Maps(countriesGeo) {
+  const a2ToNumeric = new Map();
+  const a2ToName = new Map();
+  const numericToName = new Map();
+
   for (const f of countriesGeo.features) {
     const p = f.properties;
     const a2 = p.ISO_A2;
     const n3 = p.ISO_N3;
     if (!a2 || a2 === "-99" || !n3 || n3 === "-99") continue;
-    const numeric = String(Number(n3));
+
+    const numeric = normalizeCountryCode(String(Number(n3)));
     if (numeric === "NaN") continue;
-    map.set(a2, numeric);
+
+    const name = p.ADMIN || p.NAME || p.NAME_LONG;
+    if (!name) continue;
+
+    a2ToNumeric.set(a2, numeric);
+    a2ToName.set(a2, name);
+    numericToName.set(numeric, name);
   }
-  return map;
+
+  return { a2ToNumeric, a2ToName, numericToName };
 }
 
 function shouldInclude(props) {
@@ -50,7 +69,7 @@ function main() {
 
   const places = JSON.parse(fs.readFileSync(PLACES_PATH, "utf8"));
   const countries = JSON.parse(fs.readFileSync(COUNTRIES_PATH, "utf8"));
-  const isoA2ToNumeric = buildIsoA2ToNumeric(countries);
+  const { a2ToNumeric, a2ToName, numericToName } = buildIsoA2Maps(countries);
 
   const cities = [];
   const dropped = { noIso: 0, noMap: 0, filtered: 0, duplicate: 0 };
@@ -69,8 +88,9 @@ function main() {
       continue;
     }
 
-    const countryCode = isoA2ToNumeric.get(isoA2);
-    if (!countryCode) {
+    const countryCode = a2ToNumeric.get(isoA2);
+    const countryName = a2ToName.get(isoA2);
+    if (!countryCode || !countryName) {
       dropped.noMap++;
       continue;
     }
@@ -86,6 +106,7 @@ function main() {
       id,
       name: p.NAME || p.NAMEASCII,
       countryCode,
+      countryName,
       lat: Number(p.LATITUDE),
       lng: Number(p.LONGITUDE),
       scalerank: Number(p.SCALERANK),
@@ -94,6 +115,10 @@ function main() {
   }
 
   cities.sort((a, b) => a.name.localeCompare(b.name));
+
+  const countryNames = Object.fromEntries(
+    [...numericToName.entries()].sort(([a], [b]) => a.localeCompare(b)),
+  );
 
   const meta = {
     source: "Natural Earth Populated Places (ne_10m_populated_places)",
@@ -107,9 +132,13 @@ function main() {
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify({ meta, cities }, null, 0));
+  fs.writeFileSync(
+    OUT,
+    JSON.stringify({ meta, countryNames, cities }, null, 0),
+  );
 
   console.log(`Wrote ${cities.length} cities to ${OUT}`);
+  console.log(`Country names: ${Object.keys(countryNames).length}`);
   console.log("Dropped:", dropped);
 }
 

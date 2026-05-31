@@ -22,14 +22,15 @@ npm run dev
 
 ## Scripts
 
-| Command                | Description                                |
-| ---------------------- | ------------------------------------------ |
-| `npm run dev`          | Dev server with Turbopack                  |
-| `npm run build`        | Production build                           |
-| `npm run start`        | Serve the production build                 |
-| `npm run lint`         | ESLint (flat config)                       |
-| `npm run format`       | Format every file with Prettier            |
-| `npm run format:check` | Check formatting without writing (CI mode) |
+| Command                | Description                                     |
+| ---------------------- | ----------------------------------------------- |
+| `npm run dev`          | Dev server with Turbopack                       |
+| `npm run build`        | Production build                                |
+| `npm run start`        | Serve the production build                      |
+| `npm run lint`         | ESLint (flat config)                            |
+| `npm run format`       | Format every file with Prettier                 |
+| `npm run format:check` | Check formatting without writing (CI mode)      |
+| `npm run build:cities` | Rebuild city catalog from Natural Earth sources |
 
 ## Stack
 
@@ -68,7 +69,12 @@ app/
 ├── constants/       Status palette, continents, dimensions
 └── contexts/        Theme provider
 components/ui/       shadcn-generated primitives
-public/              Static assets + bundled TopoJSON world data
+public/
+├── world-atlas/     Bundled TopoJSON country boundaries (countries-110m.json)
+└── cities/          Generated city catalog (populated-places.json)
+scripts/
+├── build-city-catalog.mjs   Builds public/cities/populated-places.json
+└── sources/                 Natural Earth GeoJSON inputs (not required at runtime)
 ```
 
 ## Attribution
@@ -79,4 +85,64 @@ public/              Static assets + bundled TopoJSON world data
 
 Map boundaries, country labels, and city locations reflect Natural Earth’s cartographic choices, not a political position by Stamped.
 
-To regenerate the city catalog after updating source data: `npm run build:cities`
+## Updating countries & cities
+
+Map geometry and city search both come from **bundled static files**, not a live API. When Natural Earth or world-atlas releases updates (or you want to change which cities are included), refresh the data locally and commit the regenerated assets.
+
+### Countries (map polygons)
+
+**Source:** [world-atlas `countries-110m`](https://github.com/topojson/world-atlas) (TopoJSON, ~177 countries at 110m resolution).
+
+**File:** `public/world-atlas/countries-110m.json`
+
+**Steps:**
+
+1. Download or build a new `countries-110m.json` from [world-atlas](https://github.com/topojson/world-atlas) (or convert from a newer Natural Earth Admin 0 shapefile using [topojson](https://github.com/topojson/topojson)).
+2. Replace `public/world-atlas/countries-110m.json`.
+3. If new ISO numeric codes appear, add them to the continent buckets in [`app/constants/continents.ts`](app/constants/continents.ts) so stats (“continents visited”) stay correct.
+4. Run `npm run build` and smoke-test: click countries, search (`Cmd/Ctrl+K`), share links, compare view, OG image.
+
+**Note:** The 110m map omits many small states and territories (e.g. Singapore, Monaco, Hong Kong as separate polygons). City pins for those places still work; only country-level clicking is limited.
+
+### Cities (search, pins, country names)
+
+**Sources** (place in `scripts/sources/`):
+
+- `ne_10m_populated_places.geojson` — [Natural Earth Populated Places](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/) (10m)
+- `ne_10m_admin_0_countries.geojson` — [Natural Earth Admin 0 – Countries](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/) (10m)
+
+**Output:** `public/cities/populated-places.json` (generated; do not edit by hand)
+
+**Steps:**
+
+1. Download fresh GeoJSON from Natural Earth (or the [natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) repo) into `scripts/sources/` with the filenames above.
+2. Run:
+
+   ```bash
+   npm run build:cities
+   ```
+
+   This rebuilds the catalog with:
+   - Zero-padded ISO numeric `countryCode` values (aligned with the map)
+   - `countryName` on each city and a top-level `countryNames` lookup (for places missing from the 110m map)
+
+3. Adjust filters in [`scripts/build-city-catalog.mjs`](scripts/build-city-catalog.mjs) if needed (default: Admin-0 capitals + `SCALERANK <= 5`).
+4. Commit **both** any source updates under `scripts/sources/` (if you version them) and the regenerated `public/cities/populated-places.json`.
+5. Run `npm run build` and test: city search, stamp/unstamp, country sidebar city picker, share/compare with cities, zoom-to-pin.
+
+### Share links & stored user data
+
+| Change                                   | What to do                                                                                                                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **New cities / country name fixes only** | Regenerate catalog (`build:cities`); existing share links and `localStorage` maps keep working.                                                                                                                           |
+| **Country codes change** (rare)          | Users’ saved maps may point at old codes; consider a one-time migration in [`app/utils/storage.ts`](app/utils/storage.ts) or bump share format (below).                                                                   |
+| **Breaking share payload**               | Increment `SHARE_FORMAT_VERSION` in [`app/utils/share.ts`](app/utils/share.ts) and add a decode path for older versions if you still want old links to work. Old links without a decoder will show “unsupported version”. |
+
+User maps and notes live in the browser (`localStorage`); refreshing Natural Earth data does **not** migrate or delete user data automatically.
+
+### Quick checklist after any data refresh
+
+- [ ] `npm run lint`
+- [ ] `npm run build`
+- [ ] Spot-check a large country, a microstate city (e.g. Singapore), and a shared link
+- [ ] Confirm search shows country **names**, not numeric codes

@@ -393,6 +393,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                 }}
                 onPointerLeave={(e) => {
                   if (e.pointerType !== "mouse") return;
+                  setTooltip(null);
                   if (!readonly && onCountryHover) onCountryHover(null);
                 }}
               />
@@ -440,6 +441,10 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                   onPointerEnter={(e) => {
                     if (e.pointerType !== "mouse") return;
                     handleCityPointerMove(e, city);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType !== "mouse") return;
+                    setTooltip(null);
                   }}
                 />
               );
