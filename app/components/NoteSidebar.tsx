@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -9,12 +10,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, CheckIcon, ChevronDown, XIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  CalendarIcon,
+  CheckIcon,
+  ChevronDown,
+  Search,
+  XIcon,
+} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { CityEntry, CountryEntry, TravelStatus } from "../types";
-import { getCitiesByCountry } from "../utils/cities";
+import { filterCityCatalogEntries, getCitiesByCountry } from "../utils/cities";
+
+const CITY_PICKER_RESULT_LIMIT = 50;
 
 interface NoteSidebarProps {
   countryCode: string | null;
@@ -82,6 +92,9 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   );
   const [dateOpen, setDateOpen] = useState(false);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState("");
+  const citySearchRef = useRef<HTMLInputElement>(null);
+  const debouncedCitySearch = useDebouncedValue(citySearchQuery, 200);
 
   const handleSave = () => {
     if (!countryCode) return;
@@ -131,6 +144,27 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const unstampedCatalog = catalogInCountry.filter(
     (c) => !stampedCities.some((s) => s.cityId === c.id),
   );
+
+  const cityPickerResults = useMemo(
+    () =>
+      filterCityCatalogEntries(
+        unstampedCatalog,
+        debouncedCitySearch,
+        CITY_PICKER_RESULT_LIMIT,
+      ),
+    [unstampedCatalog, debouncedCitySearch],
+  );
+
+  const handleCityPickerOpenChange = (open: boolean) => {
+    setCityPickerOpen(open);
+    if (!open) setCitySearchQuery("");
+  };
+
+  const handlePickCity = (cityId: string) => {
+    onStampCity?.(cityId);
+    setCityPickerOpen(false);
+    setCitySearchQuery("");
+  };
 
   if (!isOpen || !countryCode) {
     return null;
@@ -302,7 +336,10 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               </ul>
             )}
             {unstampedCatalog.length > 0 && onStampCity && (
-              <Popover open={cityPickerOpen} onOpenChange={setCityPickerOpen}>
+              <Popover
+                open={cityPickerOpen}
+                onOpenChange={handleCityPickerOpenChange}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -318,22 +355,52 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                   align="start"
                   sideOffset={6}
                   collisionPadding={16}
+                  onOpenAutoFocus={(e) => {
+                    e.preventDefault();
+                    requestAnimationFrame(() => citySearchRef.current?.focus());
+                  }}
                 >
-                  <ul className="max-h-[min(16rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain">
-                    {unstampedCatalog.slice(0, 200).map((c) => (
-                      <li key={c.id}>
-                        <button
-                          type="button"
-                          className="hover:bg-accent hover:text-accent-foreground active:bg-accent flex w-full cursor-pointer items-center px-3 py-3 text-left text-base"
-                          onClick={() => {
-                            onStampCity(c.id);
-                            setCityPickerOpen(false);
-                          }}
-                        >
-                          {c.name}
-                        </button>
+                  <div className="border-border border-b p-2">
+                    <div className="relative">
+                      <Search
+                        className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2"
+                        aria-hidden
+                      />
+                      <Input
+                        ref={citySearchRef}
+                        value={citySearchQuery}
+                        onChange={(e) => setCitySearchQuery(e.target.value)}
+                        placeholder="Search cities…"
+                        className="h-10 pl-8 text-base"
+                        aria-label="Search cities to add"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                  <ul className="max-h-[min(14rem,calc(100dvh-14rem))] overflow-y-auto overscroll-contain">
+                    {citySearchQuery !== debouncedCitySearch ? (
+                      <li className="text-muted-foreground px-3 py-3 text-sm">
+                        Searching…
                       </li>
-                    ))}
+                    ) : cityPickerResults.length === 0 ? (
+                      <li className="text-muted-foreground px-3 py-3 text-sm">
+                        {debouncedCitySearch.trim()
+                          ? "No matching cities"
+                          : "Type to search cities in this country"}
+                      </li>
+                    ) : (
+                      cityPickerResults.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            className="hover:bg-accent hover:text-accent-foreground active:bg-accent flex w-full cursor-pointer items-center px-3 py-3 text-left text-base"
+                            onClick={() => handlePickCity(c.id)}
+                          >
+                            {c.name}
+                          </button>
+                        </li>
+                      ))
+                    )}
                   </ul>
                 </PopoverContent>
               </Popover>

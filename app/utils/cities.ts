@@ -44,6 +44,13 @@ export const normalizeSearch = (s: string): string =>
 export const searchCityCatalog = (
   query: string,
   limit = 8,
+): CityCatalogEntry[] =>
+  filterCityCatalogEntries(loadCityCatalog(), query, limit);
+
+export const filterCityCatalogEntries = (
+  cities: CityCatalogEntry[],
+  query: string,
+  limit = 50,
 ): CityCatalogEntry[] => {
   const q = normalizeSearch(query.trim());
   if (!q) return [];
@@ -51,7 +58,7 @@ export const searchCityCatalog = (
   const prefix: CityCatalogEntry[] = [];
   const substring: CityCatalogEntry[] = [];
 
-  for (const city of loadCityCatalog()) {
+  for (const city of cities) {
     const name = normalizeSearch(city.name);
     if (name.startsWith(q)) {
       prefix.push(city);
