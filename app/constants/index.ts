@@ -46,8 +46,8 @@ export const MAPVIEW_COLORS = {
   borderStrokeDark: "#94a3b8", // slate-400 — lighter edges on slate-600 land (dark mode)
   hoverStroke: "#1e40af", // Blue for hover
   hoverStrokeDark: "#93c5fd", // blue-300 — readable against all status fills
-  cityPinStrokeLight: "#ffffff",
-  cityPinStrokeDark: "#0f172a", // slate-900
+  cityPinStrokeLight: "#1e293b", // slate-800 — halo on light ocean/land
+  cityPinStrokeDark: "#f1f5f9", // slate-100 — halo on dark ocean/land
 } as const;
 
 /** d3-zoom scale at which stamped city pins appear. */
