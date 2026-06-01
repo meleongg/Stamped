@@ -78,12 +78,14 @@ export default async function OpenGraphImage({
     stats.totalMarked === 0
       ? "Mark the countries you've visited"
       : [
-          `${stats.visitedCount} visited`,
-          stats.visitedPercent > 0
-            ? `${stats.visitedPercent}% of the world`
+          stats.visitedCount > 0
+            ? `${stats.visitedCount} ${stats.visitedCount === 1 ? "country" : "countries"}`
+            : null,
+          stats.citiesMarkedCount > 0
+            ? `${stats.citiesMarkedCount} ${stats.citiesMarkedCount === 1 ? "city" : "cities"}`
             : null,
           stats.continentsCount > 0
-            ? `${stats.continentsCount} / ${stats.totalContinents} continents`
+            ? `${stats.continentsCount} ${stats.continentsCount === 1 ? "continent" : "continents"}`
             : null,
         ]
           .filter(Boolean)

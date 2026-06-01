@@ -1,27 +1,19 @@
-import {
-  Continent,
-  CONTINENTS,
-  TOTAL_CONTINENTS,
-  getContinent,
-} from "../constants/continents";
+import { Continent, CONTINENTS, getContinent } from "../constants/continents";
 import { CountryEntry, MapData, TravelMapData, TravelStatus } from "../types";
 
 export interface MapStats {
-  totalCountriesInWorld: number;
   totalMarked: number;
   byStatus: Record<TravelStatus, number>;
   visitedCount: number;
-  visitedPercent: number;
   continentsCovered: Continent[];
   continentsCount: number;
-  totalContinents: number;
   firstVisitYear: number | null;
   latestVisitYear: number | null;
   citiesMarkedCount: number;
   citiesByStatus: Record<TravelStatus, number>;
+  /** Stamped cities grouped by continent, highest count first. */
+  citiesByContinent: Array<{ continent: Continent; count: number }>;
 }
-
-export const TOTAL_COUNTRIES_IN_WORLD = 195;
 
 const isStatus = (s: unknown): s is TravelStatus =>
   s === "visited" || s === "planning" || s === "want_to_visit" || s === "avoid";
@@ -76,26 +68,37 @@ export const computeStats = (data: MapData | TravelMapData): MapStats => {
     citiesByStatus[status] += 1;
   }
 
+  const citiesByContinentMap = new Map<Continent, number>();
+  for (const entry of Object.values(cities)) {
+    const continent = getContinent(entry.countryCode);
+    if (continent === "Other") continue;
+    citiesByContinentMap.set(
+      continent,
+      (citiesByContinentMap.get(continent) ?? 0) + 1,
+    );
+  }
+
+  const citiesByContinent = [...citiesByContinentMap.entries()]
+    .map(([continent, count]) => ({ continent, count }))
+    .sort(
+      (a, b) => b.count - a.count || a.continent.localeCompare(b.continent),
+    );
+
   const visitedCount = byStatus.visited;
-  const visitedPercent = Math.round(
-    (visitedCount / TOTAL_COUNTRIES_IN_WORLD) * 100,
-  );
 
   const continentsCovered = CONTINENTS.filter((c) => visitedContinents.has(c));
   const citiesMarkedCount = Object.keys(cities).length;
 
   return {
-    totalCountriesInWorld: TOTAL_COUNTRIES_IN_WORLD,
     totalMarked: Object.keys(countries).length,
     byStatus,
     visitedCount,
-    visitedPercent,
     continentsCovered,
     continentsCount: continentsCovered.length,
-    totalContinents: TOTAL_CONTINENTS,
     firstVisitYear,
     latestVisitYear,
     citiesMarkedCount,
     citiesByStatus,
+    citiesByContinent,
   };
 };
