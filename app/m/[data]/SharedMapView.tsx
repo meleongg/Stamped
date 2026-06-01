@@ -3,7 +3,6 @@
 import { CountrySearch } from "@/app/components/CountrySearch";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
-import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
 import { SharedMapActions } from "@/app/m/[data]/SharedMapActions";
 import { CityCatalogEntry, TravelMapData, TravelStatus } from "@/app/types";
@@ -26,15 +25,13 @@ const SharedMapActionStack: React.FC<{
   onImported: (merged: TravelMapData) => void;
   myData: TravelMapData;
 }> = ({ encoded, mapName, sharedData, onImported, myData }) => (
-  <div className="flex flex-col gap-3">
-    <SharedMapActions
-      encoded={encoded}
-      mapName={mapName}
-      sharedData={sharedData}
-      onImported={onImported}
-    />
-    <ShareDialog travelMapData={myData} />
-  </div>
+  <SharedMapActions
+    encoded={encoded}
+    mapName={mapName}
+    sharedData={sharedData}
+    myData={myData}
+    onImported={onImported}
+  />
 );
 
 export const SharedMapView: React.FC<SharedMapViewProps> = ({

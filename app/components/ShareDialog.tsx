@@ -36,9 +36,14 @@ const SHARE_NAME_EXAMPLE = "My Awesome Map";
 
 interface ShareDialogProps {
   travelMapData: TravelMapData;
+  /** Outline when nested in a secondary action group (e.g. shared map page). */
+  triggerVariant?: "default" | "outline";
 }
 
-export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
+export const ShareDialog: React.FC<ShareDialogProps> = ({
+  travelMapData,
+  triggerVariant = "default",
+}) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -173,7 +178,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ travelMapData }) => {
     >
       <DialogTrigger asChild>
         <Button
-          variant="default"
+          variant={triggerVariant}
           className="flex w-full cursor-pointer items-center justify-center gap-2"
           disabled={totalCountries === 0}
           title={
