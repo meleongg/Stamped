@@ -53,11 +53,19 @@ export const MAPVIEW_COLORS = {
 /** d3-zoom scale at which stamped city pins appear. */
 export const CITY_PIN_MIN_ZOOM = 2.5;
 
-/** Target on-screen pin radius (counter-scaled in mapPins.ts). */
-export const CITY_PIN_RADIUS_PX = 6;
+/** Max d3-zoom scale (pinch / zoom-in). Higher helps separate nearby cities. */
+export const MAP_MAX_ZOOM = 16;
+
+/** Pin radius at CITY_PIN_MIN_ZOOM (regional view — less overlap). */
+export const CITY_PIN_RADIUS_MIN_PX = 3;
+/** Pin radius at MAP_MAX_ZOOM (local view — readable + tappable on mobile). */
+export const CITY_PIN_RADIUS_MAX_PX = 8;
 export const CITY_PIN_SELECTED_EXTRA_PX = 2;
-export const CITY_PIN_MIN_RADIUS_SVG = 1.5;
-export const CITY_PIN_MAX_RADIUS_SVG = 12;
+export const CITY_PIN_MIN_RADIUS_SVG = 1;
+export const CITY_PIN_MAX_RADIUS_SVG = 14;
+
+/** Min screen-space gap between nearby city pin centers (px). */
+export const CITY_PIN_MIN_SEPARATION_PX = 4;
 
 // Map dimensions
 export const MAP_DIMENSIONS = {

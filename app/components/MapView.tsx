@@ -16,13 +16,19 @@ import {
 import {
   CITY_PIN_MIN_ZOOM,
   MAP_DIMENSIONS,
+  MAP_MAX_ZOOM,
   MAPVIEW_COLORS,
   STATUS_COLORS,
 } from "../constants";
 import { useTheme } from "../contexts/ThemeContext";
 import { CityEntry, TravelStatus } from "../types";
 import { CountryFeature } from "../utils/geo";
-import { getCityPinRadius, getCityPinStrokeWidth } from "../utils/mapPins";
+import {
+  computeCityPinOffsets,
+  getCityPinRadius,
+  getCityPinStrokeWidth,
+  getCountryBorderStrokeWidth,
+} from "../utils/mapPins";
 import { ExportButton } from "./ExportButton";
 import { MapTooltip, MapTooltipState } from "./MapTooltip";
 import { MapZoomControls } from "./MapZoomControls";
@@ -35,10 +41,12 @@ const STATUS_HOVER_COLORS: Record<TravelStatus, string> = {
 };
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 8;
+const MAX_SCALE = MAP_MAX_ZOOM;
 const ZOOM_STEP = 1.6;
 const TRANSITION_MS = 600;
 const CLICK_DISTANCE = 5;
+/** ~40 km padding when focusing a city (degrees at mid-latitudes). */
+const CITY_FOCUS_PAD_DEG = 0.36;
 
 interface MapViewProps {
   getCountryStatus: (countryCode: string) => TravelStatus | null;
@@ -219,12 +227,43 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   );
 
   const focusCity = useCallback(
-    (cityId: string, lat: number, lng: number) => {
+    (_cityId: string, lat: number, lng: number) => {
       if (!svgRef.current || !zoomBehaviorRef.current) return;
-      const projected = projection([lng, lat]);
-      if (!projected) return;
-      const [cx, cy] = projected;
-      const scale = Math.min(MAX_SCALE, Math.max(CITY_PIN_MIN_ZOOM + 1, 4));
+      const pad = CITY_FOCUS_PAD_DEG;
+      const corners: [number, number][] = [
+        [lng - pad, lat - pad],
+        [lng + pad, lat - pad],
+        [lng + pad, lat + pad],
+        [lng - pad, lat + pad],
+      ];
+      const projected = corners
+        .map((c) => projection(c))
+        .filter((p): p is [number, number] => p !== null);
+      if (projected.length === 0) return;
+
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (const [x, y] of projected) {
+        x0 = Math.min(x0, x);
+        y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x);
+        y1 = Math.max(y1, y);
+      }
+
+      const cx = (x0 + x1) / 2;
+      const cy = (y0 + y1) / 2;
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const scale = Math.max(
+        MIN_SCALE,
+        Math.min(
+          MAX_SCALE,
+          0.85 /
+            Math.max(dx / MAP_DIMENSIONS.WIDTH, dy / MAP_DIMENSIONS.HEIGHT),
+        ),
+      );
 
       const transform = zoomIdentity
         .translate(MAP_DIMENSIONS.WIDTH / 2, MAP_DIMENSIONS.HEIGHT / 2)
@@ -285,6 +324,19 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   };
 
   const showCityPins = zoomScale >= CITY_PIN_MIN_ZOOM;
+  const cityPinOffsets = useMemo(
+    () =>
+      showCityPins
+        ? computeCityPinOffsets(
+            stampedCities,
+            (coords) => projection(coords),
+            zoomScale,
+            containerWidth,
+            MAP_DIMENSIONS.WIDTH,
+          )
+        : new Map<string, { dx: number; dy: number }>(),
+    [showCityPins, stampedCities, projection, zoomScale, containerWidth],
+  );
   const cityPinStroke =
     theme === "dark"
       ? MAPVIEW_COLORS.cityPinStrokeDark
@@ -366,7 +418,11 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
                 : theme === "dark"
                   ? MAPVIEW_COLORS.borderStrokeDark
                   : MAPVIEW_COLORS.borderStroke;
-            const strokeWidth = isSelected ? "3" : isHovered ? "1" : "0.4";
+            const baseStrokeWidth = isSelected ? 3 : isHovered ? 1 : 0.4;
+            const strokeWidth = getCountryBorderStrokeWidth(
+              baseStrokeWidth,
+              zoomScale,
+            );
             return (
               <path
                 key={countryCode}
@@ -404,6 +460,9 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
               const projected = projection([city.lng, city.lat]);
               if (!projected) return null;
               const [cx, cy] = projected;
+              const offset = cityPinOffsets.get(city.cityId);
+              const pinX = cx + (offset?.dx ?? 0);
+              const pinY = cy + (offset?.dy ?? 0);
               const isSelected = selectedCityId === city.cityId;
               const r = getCityPinRadius({
                 zoomScale,
@@ -421,8 +480,8 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
               return (
                 <circle
                   key={city.cityId}
-                  cx={cx}
-                  cy={cy}
+                  cx={pinX}
+                  cy={pinY}
                   r={r}
                   fill={fillColor}
                   stroke={cityPinStroke}
