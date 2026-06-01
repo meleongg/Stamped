@@ -126,7 +126,7 @@ Map geometry and city search both come from **bundled static files**, not a live
    - Zero-padded ISO numeric `countryCode` values (aligned with the map)
    - `countryName` on each city and a top-level `countryNames` lookup (for places missing from the 110m map)
 
-3. Adjust filters in [`scripts/build-city-catalog.mjs`](scripts/build-city-catalog.mjs) if needed (default: Admin-0 capitals + `SCALERANK <= 5`).
+3. Adjust filters in [`scripts/build-city-catalog.mjs`](scripts/build-city-catalog.mjs) if needed (default: Admin-0 capitals + primary cities `SCALERANK <= 5` + secondary `SCALERANK = 6`).
 4. Commit **both** any source updates under `scripts/sources/` (if you version them) and the regenerated `public/cities/populated-places.json`.
 5. Run `npm run build` and test: city search, stamp/unstamp, country sidebar city picker, share/compare with cities, zoom-to-pin.
 
