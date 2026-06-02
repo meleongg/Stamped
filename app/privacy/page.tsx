@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const LAST_UPDATED = "May 26, 2026";
+const LAST_UPDATED = "May 28, 2026";
 
 export default function PrivacyPolicy() {
   return (
@@ -29,21 +29,32 @@ export default function PrivacyPolicy() {
             Data Collection and Storage
           </h2>
           <p className="text-muted-foreground mb-4">
-            Stamped is a client-side application. Your travel data is stored
-            locally in your browser and is not transmitted to or stored on any
-            of our servers.
+            Stamped is local-first: your full travel map — including notes and
+            visit dates — is stored in your browser by default. We do not
+            require an account, and we do not collect your email or other
+            profile information.
+          </p>
+          <p className="text-muted-foreground mb-4">
+            If you choose to generate a share link, a limited snapshot of your
+            map (map name, country statuses, and city statuses only) is stored
+            on our servers for up to 90 days so others can view it. See{" "}
+            <strong>Share Links</strong> below.
           </p>
 
           <h2 className="text-foreground mb-4 text-xl font-semibold">
             Local Storage
           </h2>
           <p className="text-muted-foreground mb-4">
-            Your travel data — country statuses, notes, and visit dates — is
-            stored in your browser&apos;s <code>localStorage</code>. This data:
+            Your complete travel data — country statuses, notes, and visit dates
+            — is stored in your browser&apos;s <code>localStorage</code>. This
+            data:
           </p>
           <ul className="text-muted-foreground mb-4 ml-6 list-disc">
-            <li>Remains on your device only</li>
-            <li>Is not transmitted to any external servers by Stamped</li>
+            <li>Remains on your device unless you share a link (see below)</li>
+            <li>
+              Is not uploaded to our servers except when you explicitly create
+              or update a share link
+            </li>
             <li>Can be cleared at any time by clearing your browser data</li>
             <li>Is not accessible to other websites</li>
           </ul>
@@ -68,10 +79,11 @@ export default function PrivacyPolicy() {
             </li>
           </ul>
           <p className="text-muted-foreground mb-4">
-            Share snapshots are deleted automatically after 90 days, or when you
-            stop updating the link. Your browser keeps an anonymous edit token
-            locally so map updates can refresh the same link — we do not store
-            your email, account, or device identity.
+            Share snapshots are deleted automatically after 90 days. Opening
+            Share again from the same browser updates the stored snapshot and
+            extends the expiry. Your browser keeps an anonymous edit token
+            locally for this purpose — we do not store your email, account, or
+            device identity with the share.
           </p>
           <p className="text-muted-foreground mb-4">
             Your <strong>notes and visit dates are never included</strong> in
@@ -164,9 +176,9 @@ export default function PrivacyPolicy() {
             Data Security
           </h2>
           <p className="text-muted-foreground mb-4">
-            Since all map data is stored locally in your browser, the security
-            of that data depends on your device&apos;s security. We recommend
-            keeping your browser and device updated.
+            Your full map (including notes and visit dates) stays in your
+            browser. Share snapshots on our servers contain only the fields
+            listed above. We recommend keeping your browser and device updated.
           </p>
 
           <h2 className="text-foreground mb-4 text-xl font-semibold">

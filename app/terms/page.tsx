@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const LAST_UPDATED = "May 26, 2026";
+const LAST_UPDATED = "May 28, 2026";
 
 export default function TermsOfService() {
   return (
@@ -37,10 +37,11 @@ export default function TermsOfService() {
             Description of Service
           </h2>
           <p className="text-muted-foreground mb-4">
-            Stamped is a free, client-side web application that allows users to
-            track their travel history and plan future trips by marking
-            countries on an interactive world map. All map data is stored
-            locally in your browser.
+            Stamped is a free web application that lets you track your travel
+            history and plan future trips by marking countries and cities on an
+            interactive world map. Your full map is stored locally in your
+            browser. Optional share links store a limited snapshot on our
+            servers so others can view your map.
           </p>
 
           <h2 className="text-foreground mb-4 text-xl font-semibold">
@@ -66,19 +67,21 @@ export default function TermsOfService() {
             When you generate a share link, the display name you chose and your
             country and city statuses are stored on our servers for up to 90
             days. Anyone with the link can view that information until it
-            expires. You are responsible for the content of share links you
-            generate and for who you share them with. Notes and visit dates are
-            never included in share links.
+            expires. The stored snapshot updates when you open Share again from
+            the same browser. You are responsible for the content of share links
+            you generate and for who you share them with. Notes and visit dates
+            are never included in share links.
           </p>
 
           <h2 className="text-foreground mb-4 text-xl font-semibold">
             Data and Privacy
           </h2>
           <p className="text-muted-foreground mb-4">
-            All your map data is stored locally in your browser. We do not have
-            access to your personal travel data. You are responsible for backing
-            up your data if desired, as clearing your browser data will remove
-            your travel information. See our{" "}
+            Your complete map (including notes and visit dates) is stored
+            locally in your browser. We only receive the limited share snapshot
+            described above if you choose to create or update a share link. You
+            are responsible for backing up your data if desired, as clearing
+            your browser data will remove your travel information. See our{" "}
             <Link
               href="/privacy"
               className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
