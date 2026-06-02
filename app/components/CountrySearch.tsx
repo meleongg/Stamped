@@ -6,10 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { STATUS_COLORS } from "../constants";
 import { CityCatalogEntry, TravelStatus } from "../types";
 import { normalizeSearch, searchCityCatalog } from "../utils/cities";
-import {
-  getCountryNameByCode,
-  getCountryNameForCity,
-} from "../utils/countryNames";
+import { getCountryNameForCity } from "../utils/countryNames";
 import { CountryFeature } from "../utils/geo";
 
 interface CountrySearchProps {
