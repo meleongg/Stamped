@@ -39,7 +39,7 @@ const IMPORT_OPTIONS: {
 ];
 
 interface SharedMapActionsProps {
-  encoded: string;
+  shareId: string;
   mapName: string;
   sharedData: TravelMapData;
   myData: TravelMapData;
@@ -47,7 +47,7 @@ interface SharedMapActionsProps {
 }
 
 export const SharedMapActions: React.FC<SharedMapActionsProps> = ({
-  encoded,
+  shareId,
   mapName,
   sharedData,
   myData,
@@ -122,7 +122,7 @@ export const SharedMapActions: React.FC<SharedMapActionsProps> = ({
         </Button>
         <Button asChild variant="outline" className="w-full">
           <Link
-            href={`/compare/${encoded}`}
+            href={`/compare/${shareId}`}
             className="flex items-center justify-center gap-2"
           >
             <GitCompareArrows className="h-4 w-4" />

@@ -52,9 +52,9 @@ export default function PrivacyPolicy() {
             Share Links
           </h2>
           <p className="text-muted-foreground mb-4">
-            When you generate a share link, the following information is encoded
-            into the URL itself (and therefore visible to anyone you send the
-            link to):
+            When you generate a share link, the following information is stored
+            on our servers (Upstash Redis) for up to 90 days and is viewable by
+            anyone you send the link to:
           </p>
           <ul className="text-muted-foreground mb-4 ml-6 list-disc">
             <li>The display name you chose for the share</li>
@@ -67,6 +67,12 @@ export default function PrivacyPolicy() {
               (visited / planning / want to visit)
             </li>
           </ul>
+          <p className="text-muted-foreground mb-4">
+            Share snapshots are deleted automatically after 90 days, or when you
+            stop updating the link. Your browser keeps an anonymous edit token
+            locally so map updates can refresh the same link — we do not store
+            your email, account, or device identity.
+          </p>
           <p className="text-muted-foreground mb-4">
             Your <strong>notes and visit dates are never included</strong> in
             share links. They stay on your device.
@@ -118,6 +124,19 @@ export default function PrivacyPolicy() {
                 </a>
               </strong>{" "}
               — city names and coordinates (filtered subset), bundled locally
+            </li>
+            <li>
+              <strong>Upstash Redis</strong> — ephemeral storage for share link
+              snapshots (map name, country/city statuses only). Data expires
+              after 90 days. See{" "}
+              <a
+                href="https://upstash.com/trust"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                Upstash&apos;s privacy documentation
+              </a>
             </li>
             <li>
               <strong>Vercel</strong> — hosting, deployment, and bandwidth

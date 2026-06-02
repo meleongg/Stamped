@@ -63,11 +63,12 @@ export default function TermsOfService() {
             Sharing and Share Links
           </h2>
           <p className="text-muted-foreground mb-4">
-            When you generate a share link, the display name you chose and the
-            list of countries with their statuses are encoded into the URL.
-            Anyone with the link can view that information. You are responsible
-            for the content of share links you generate and for who you share
-            them with. Notes and visit dates are never included in share links.
+            When you generate a share link, the display name you chose and your
+            country and city statuses are stored on our servers for up to 90
+            days. Anyone with the link can view that information until it
+            expires. You are responsible for the content of share links you
+            generate and for who you share them with. Notes and visit dates are
+            never included in share links.
           </p>
 
           <h2 className="text-foreground mb-4 text-xl font-semibold">

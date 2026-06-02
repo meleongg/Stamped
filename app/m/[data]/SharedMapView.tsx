@@ -7,26 +7,26 @@ import { Stats } from "@/app/components/Stats";
 import { SharedMapActions } from "@/app/m/[data]/SharedMapActions";
 import { CityCatalogEntry, TravelMapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
-import { decodeMap } from "@/app/utils/share";
 import { computeStats } from "@/app/utils/stats";
 import { localStorageStore } from "@/app/utils/storage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 
 interface SharedMapViewProps {
-  encoded: string;
+  shareId: string;
   mapName: string;
+  sharedData: TravelMapData;
 }
 
 const SharedMapActionStack: React.FC<{
-  encoded: string;
+  shareId: string;
   mapName: string;
   sharedData: TravelMapData;
   onImported: (merged: TravelMapData) => void;
   myData: TravelMapData;
-}> = ({ encoded, mapName, sharedData, onImported, myData }) => (
+}> = ({ shareId, mapName, sharedData, onImported, myData }) => (
   <SharedMapActions
-    encoded={encoded}
+    shareId={shareId}
     mapName={mapName}
     sharedData={sharedData}
     myData={myData}
@@ -35,8 +35,9 @@ const SharedMapActionStack: React.FC<{
 );
 
 export const SharedMapView: React.FC<SharedMapViewProps> = ({
-  encoded,
+  shareId,
   mapName,
+  sharedData,
 }) => {
   const [countries] = useState<CountryFeature[]>(() => loadCountries());
   const [myData, setMyData] = useState<TravelMapData>({
@@ -46,8 +47,7 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   const mapRef = useRef<MapViewHandle>(null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
 
-  const decoded = useMemo(() => decodeMap(encoded), [encoded]);
-  const stats = useMemo(() => computeStats(decoded.data), [decoded.data]);
+  const stats = useMemo(() => computeStats(sharedData), [sharedData]);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +60,8 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
     };
   }, []);
 
-  const getCountryStatus = (countryCode: string): TravelStatus | null => {
-    return decoded.data.countries[countryCode]?.status || null;
-  };
+  const getCountryStatus = (countryCode: string): TravelStatus | null =>
+    sharedData.countries[countryCode]?.status || null;
 
   const counts = useMemo(() => {
     const acc = {
@@ -71,21 +70,21 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
       want_to_visit: 0,
       avoid: 0,
     } satisfies Record<TravelStatus, number>;
-    for (const entry of Object.values(decoded.data.countries)) {
+    for (const entry of Object.values(sharedData.countries)) {
       if (entry.status in acc) {
         acc[entry.status] += 1;
       }
     }
     return acc;
-  }, [decoded.data]);
+  }, [sharedData]);
 
   const sharedCities = useMemo(
-    () => Object.values(decoded.data.cities),
-    [decoded.data.cities],
+    () => Object.values(sharedData.cities),
+    [sharedData.cities],
   );
 
   const getCityStatus = (cityId: string): TravelStatus | null =>
-    decoded.data.cities[cityId]?.status ?? null;
+    sharedData.cities[cityId]?.status ?? null;
 
   const handleSearchSelectCountry = (countryCode: string) => {
     if (!getCountryStatus(countryCode)) return;
@@ -101,9 +100,9 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
 
   const actionStack = (
     <SharedMapActionStack
-      encoded={encoded}
+      shareId={shareId}
       mapName={mapName}
-      sharedData={decoded.data}
+      sharedData={sharedData}
       onImported={setMyData}
       myData={myData}
     />

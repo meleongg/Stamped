@@ -3,10 +3,11 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { STATUS_COLORS } from "@/app/constants";
 import { MapData, TravelStatus } from "@/app/types";
 import { loadCountries } from "@/app/utils/geo";
-import { InvalidShareLinkError, decodeMap } from "@/app/utils/share";
+import { resolveShareOrThrow, ShareStoreError } from "@/app/lib/shareStore";
 import { computeStats } from "@/app/utils/stats";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const contentType = "image/png";
 export const size = { width: 1200, height: 630 };
 export const alt = "Stamped travel map";
@@ -33,7 +34,7 @@ export default async function OpenGraphImage({
 }: {
   params: Promise<RouteParams>;
 }) {
-  const { data: encoded } = await params;
+  const { data: shareId } = await params;
 
   let name = "Travel";
   let statusByCountry: Record<string, TravelStatus> = {};
@@ -41,16 +42,16 @@ export default async function OpenGraphImage({
   let travelData = { countries: {} as MapData, cities: {} };
 
   try {
-    const decoded = decodeMap(encoded);
-    name = decoded.name;
-    travelData = decoded.data;
-    mapData = decoded.data.countries;
+    const share = await resolveShareOrThrow(shareId);
+    name = share.name;
+    travelData = share.data;
+    mapData = share.data.countries;
     statusByCountry = Object.fromEntries(
       Object.entries(mapData).map(([code, entry]) => [code, entry.status]),
     );
   } catch (error) {
-    if (!(error instanceof InvalidShareLinkError)) {
-      console.error("OG decode error:", error);
+    if (!(error instanceof ShareStoreError)) {
+      console.error("OG share lookup error:", error);
     }
   }
 
@@ -262,7 +263,8 @@ export default async function OpenGraphImage({
     {
       ...size,
       headers: {
-        "cache-control": "public, immutable, no-transform, max-age=31536000",
+        // Share data updates in place at the same URL — do not long-cache.
+        "cache-control": "public, max-age=0, must-revalidate",
       },
     },
   );

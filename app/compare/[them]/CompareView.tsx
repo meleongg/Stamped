@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface CompareViewProps {
-  theirEncoded: string;
+  theirShareId: string;
   theirMapName: string;
   theirData: TravelMapData;
 }
@@ -55,7 +55,7 @@ const isVisited = (entry: { status: TravelStatus } | undefined) =>
 const DRILLDOWN_MAX = 8;
 
 export const CompareView: React.FC<CompareViewProps> = ({
-  theirEncoded,
+  theirShareId,
   theirMapName,
   theirData,
 }) => {
@@ -244,7 +244,7 @@ export const CompareView: React.FC<CompareViewProps> = ({
           </p>
         </div>
         <Button asChild variant="ghost">
-          <Link href={`/m/${theirEncoded}`} className="flex items-center gap-2">
+          <Link href={`/m/${theirShareId}`} className="flex items-center gap-2">
             <Home className="h-4 w-4" />
             Back to {theirMapName}
           </Link>

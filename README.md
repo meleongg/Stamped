@@ -41,21 +41,27 @@ npm run dev
 - [Tailwind CSS](https://tailwindcss.com) 4 + [shadcn/ui](https://ui.shadcn.com) primitives
 - [Lucide](https://lucide.dev) icons, [Sonner](https://sonner.emilkowal.ski) toasts, [react-day-picker](https://daypicker.dev) for the visit-date picker
 
-## How sharing works (without a backend)
+## How sharing works
 
-Sharing is **fully client-side**. When you generate a link, your map data is encoded into a compact format (`USA-v,CAN-w,…`), prefixed with a version + your display name, and base64url-packed into the URL path:
+When you share, Stamped stores a short snapshot of your map in **Upstash Redis** (via the Vercel Marketplace) and gives you a short link:
 
 ```
-/m/<base64url-encoded payload>
+/m/k7x9m2
 ```
 
-The receiving page (a Next.js Server Component) decodes this on every request and:
+**What's stored:** your map name, country statuses, and city statuses (notes and visit dates are never included).
 
-1. Renders the **read-only map** with the encoded statuses
-2. Generates a **dynamic OG image** via [`opengraph-image.tsx`](app/m/[data]/opengraph-image.tsx) + `@vercel/og`, so social previews show actual stats and a map render
-3. Offers a **"Compare with my map"** CTA — `/compare/[them]` overlays the visitor's `localStorage` data with the shared map and shows overlap, gaps, and a one-tap "add their places to my want-to-visit list"
+**Retention:** links expire after **90 days** of inactivity; updating your map from the same browser refreshes the expiry and updates the same link.
 
-No data ever leaves the URL bar. Notes and visit dates stay on the original device.
+**No account:** your browser keeps an anonymous edit token in `localStorage` so edits don't create a new link. No email, login, or personal profile is required.
+
+The shared page:
+
+1. Renders a **read-only map** from the stored snapshot
+2. Generates a **dynamic OG image** via [`opengraph-image.tsx`](app/m/[data]/opengraph-image.tsx) for iMessage, Twitter, Discord, etc.
+3. Offers **Compare with my map** — `/compare/[id]` overlays the visitor's `localStorage` data with the shared map
+
+Local setup: install the Upstash integration in Vercel, then `vercel env pull .env.development.local` (see [`.env.example`](.env.example)).
 
 ## Project structure
 
@@ -65,7 +71,9 @@ app/
 ├── compare/[them]/  Compare-with-a-friend route
 ├── m/[data]/        Read-only shared map viewer + dynamic OG image
 ├── hooks/           Custom hooks (useMapData)
-├── utils/           Pure utilities (geo, share encoding, stats, storage)
+├── utils/           Pure utilities (geo, share payload, stats, storage)
+├── lib/             Server helpers (Redis share store)
+├── api/share/       Create and update share links
 ├── constants/       Status palette, continents, dimensions
 └── contexts/        Theme provider
 components/ui/       shadcn-generated primitives

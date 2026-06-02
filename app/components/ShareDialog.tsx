@@ -12,19 +12,27 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { track } from "@vercel/analytics";
-import { Check, Copy, Mail, MessageCircle, Share2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Check,
+  Copy,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Share2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TravelMapData } from "../types";
 import {
-  SHARE_NAME_MAX,
-  buildShareUrl,
-  encodeMap,
+  formatShareExpiry,
   formatShareNativeText,
   formatShareNativeTitle,
   isValidName,
   sanitizeName,
+  SHARE_NAME_MAX,
 } from "../utils/share";
+import { canonicalSharePayload, hashSharePayload } from "../utils/sharePayload";
+import { ensureShareLink, persistShareName } from "../utils/shareClient";
 import {
   getDesktopShareActions,
   shareLinkNative,
@@ -51,23 +59,62 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   });
   const [copied, setCopied] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareId, setShareId] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
+  const linkRequestRef = useRef(0);
 
   const trimmedName = sanitizeName(name);
   const countryCount = Object.keys(travelMapData.countries).length;
   const canShare = isValidName(name) && countryCount > 0;
 
-  const shareUrl = useMemo(() => {
-    if (!canShare || typeof window === "undefined") return "";
+  const syncShareLink = useCallback(async () => {
+    if (!canShare || typeof window === "undefined") return;
+
+    const requestId = ++linkRequestRef.current;
+    setLinkLoading(true);
+    setLinkError(null);
+
     try {
-      return buildShareUrl(window.location.origin, {
+      const payload = canonicalSharePayload({
         name: trimmedName,
         data: travelMapData,
       });
-    } catch {
-      return "";
+      const payloadHash = await hashSharePayload(payload);
+      const result = await ensureShareLink(payload, payloadHash);
+
+      if (requestId !== linkRequestRef.current) return;
+
+      setShareUrl(result.url);
+      setShareId(result.shareId);
+      setExpiresAt(result.expiresAt);
+    } catch (error) {
+      if (requestId !== linkRequestRef.current) return;
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not generate share link.";
+      setLinkError(message);
+      setShareUrl("");
+      setShareId("");
+      setExpiresAt("");
+    } finally {
+      if (requestId === linkRequestRef.current) {
+        setLinkLoading(false);
+      }
     }
   }, [canShare, trimmedName, travelMapData]);
+
+  useEffect(() => {
+    if (!open || !canShare) return;
+    const timer = window.setTimeout(() => {
+      void syncShareLink();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [open, canShare, syncShareLink]);
 
   const sharePayload = useMemo(
     () => ({
@@ -88,25 +135,16 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     [shareUrl, sharePayload],
   );
 
-  const ogPreviewSrc = useMemo(() => {
-    if (!canShare || typeof window === "undefined") return "";
-    try {
-      const encoded = encodeMap({ name: trimmedName, data: travelMapData });
-      return `${window.location.origin}/m/${encoded}/opengraph-image`;
-    } catch {
-      return "";
-    }
-  }, [canShare, trimmedName, travelMapData]);
-
-  const persistShareName = () => {
-    window.localStorage.setItem(SHARE_NAME_STORAGE_KEY, trimmedName);
-  };
+  const ogPreviewSrc =
+    shareId && expiresAt && typeof window !== "undefined"
+      ? `${window.location.origin}/m/${shareId}/opengraph-image?v=${encodeURIComponent(expiresAt)}`
+      : "";
 
   const handleCopy = async () => {
     if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      persistShareName();
+      persistShareName(trimmedName);
       setCopied(true);
       toast.success("Link copied to clipboard");
       track("share_link_copied", { countries: countryCount });
@@ -122,7 +160,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     if (useNativeShare) {
       const result = await shareLinkNative(sharePayload);
       if (result === "shared") {
-        persistShareName();
+        persistShareName(trimmedName);
         toast.success("Shared successfully");
         track("share_link_native", { countries: countryCount });
       } else if (result === "unavailable") {
@@ -144,7 +182,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     }
     if (action.href) {
       window.open(action.href, "_blank", "noopener,noreferrer");
-      persistShareName();
+      persistShareName(trimmedName);
       toast.success(`Opening ${action.label}…`);
       setShareMenuOpen(false);
     }
@@ -195,8 +233,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Share your travel map</DialogTitle>
           <DialogDescription>
-            We&apos;ll bake your map name and travel statuses into the link.
-            Notes and dates stay private on your device.
+            We&apos;ll store your map name and travel statuses on our servers
+            for 90 days. Notes and dates stay private on your device.
           </DialogDescription>
         </DialogHeader>
 
@@ -227,6 +265,18 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
             <p className="text-muted-foreground text-sm">
               Enter a map name to generate a share link.
             </p>
+          ) : linkError ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-destructive text-sm">{linkError}</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => void syncShareLink()}
+              >
+                Try again
+              </Button>
+            </div>
           ) : (
             <>
               <div className="flex flex-col gap-2">
@@ -234,7 +284,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                 <div className="flex gap-2">
                   <Input
                     id="share-url"
-                    value={shareUrl}
+                    value={linkLoading ? "Generating link…" : shareUrl}
                     readOnly
                     onFocus={(e) => e.currentTarget.select()}
                     className="font-mono text-xs"
@@ -245,22 +295,33 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                     size="icon"
                     className="shrink-0 cursor-pointer"
                     aria-label="Copy share link"
+                    disabled={!shareUrl || linkLoading}
                   >
-                    {copied ? (
+                    {linkLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : copied ? (
                       <Check className="h-4 w-4" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
                   </Button>
                 </div>
+                {expiresAt && !linkLoading && (
+                  <p className="text-muted-foreground text-xs">
+                    Link active until {formatShareExpiry(expiresAt)}. Shared
+                    link updates when you open Share — your map may have changed
+                    since last sync.
+                  </p>
+                )}
               </div>
 
-              {ogPreviewSrc && (
+              {ogPreviewSrc && !linkLoading && (
                 <div className="flex flex-col gap-2">
                   <Label>Preview</Label>
                   <div className="bg-muted aspect-[1200/630] overflow-hidden rounded-md border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
+                      key={expiresAt}
                       src={ogPreviewSrc}
                       alt="Share preview"
                       className="h-full w-full object-cover"
@@ -282,6 +343,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                   onClick={handleShareViaClick}
                   aria-expanded={shareMenuOpen}
                   aria-haspopup="menu"
+                  disabled={!shareUrl || linkLoading}
                 >
                   <Share2 className="h-4 w-4" />
                   Share via…
