@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { STATUS_COLORS } from "@/app/constants";
-import { globeCountryCapColor } from "@/app/utils/globeColors";
+import {
+  globeCityLabelColor,
+  globeCityMarkerColor,
+  globeCountryCapColor,
+} from "@/app/utils/globeColors";
 import {
   DEFAULT_MAP_VIEW_MODE,
   isMapViewMode,
@@ -24,5 +28,12 @@ describe("globe colors", () => {
   it("falls back to unvisited land colors by theme", () => {
     expect(globeCountryCapColor(null, "light")).toBe("#94a3b8");
     expect(globeCountryCapColor(undefined, "dark")).toBe("#475569");
+  });
+
+  it("keeps city markers high-contrast against status-colored land", () => {
+    expect(globeCityMarkerColor("light")).toBe("#ffffff");
+    expect(globeCityMarkerColor("dark")).toBe("#f8fafc");
+    expect(globeCityLabelColor("light")).toBe("#0f172a");
+    expect(globeCityLabelColor("dark")).toBe("#f8fafc");
   });
 });

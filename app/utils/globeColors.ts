@@ -25,5 +25,17 @@ export const globeStrokeColor = (theme: "light" | "dark"): string =>
 export const globeBackgroundColor = (theme: "light" | "dark"): string =>
   theme === "dark" ? MAPVIEW_COLORS.oceanDark : MAPVIEW_COLORS.oceanLight;
 
-export const globeCityPointColor = (status: TravelStatus): string =>
+/**
+ * City markers use a high-contrast fill (not status green/yellow/etc.) so they
+ * stay visible on top of status-colored countries. Status is still conveyed by
+ * the country fill and by a small accent on the label dot via markerAccent.
+ */
+export const globeCityMarkerColor = (theme: "light" | "dark"): string =>
+  theme === "dark" ? "#f8fafc" : "#ffffff";
+
+export const globeCityLabelColor = (theme: "light" | "dark"): string =>
+  theme === "dark" ? "#f8fafc" : "#0f172a";
+
+/** Status accent for the label's included dot (small, still readable on white). */
+export const globeCityAccentColor = (status: TravelStatus): string =>
   STATUS_COLORS[status];

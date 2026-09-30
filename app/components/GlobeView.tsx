@@ -5,7 +5,8 @@ import { useTheme } from "@/app/contexts/ThemeContext";
 import { CityEntry, TravelStatus } from "@/app/types";
 import {
   globeBackgroundColor,
-  globeCityPointColor,
+  globeCityLabelColor,
+  globeCityMarkerColor,
   globeCountryCapColor,
   globeSideColor,
   globeStrokeColor,
@@ -55,13 +56,17 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  const markerColor = globeCityMarkerColor(theme);
+  const labelColor = globeCityLabelColor(theme);
+
   const pointsData = useMemo(
     () =>
       stampedCities.map((city) => ({
         ...city,
-        color: globeCityPointColor(city.status),
+        markerColor,
+        labelColor,
       })),
-    [stampedCities],
+    [stampedCities, markerColor, labelColor],
   );
 
   const bg = globeBackgroundColor(theme);
@@ -135,22 +140,22 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
           pointsData={pointsData}
           pointLat="lat"
           pointLng="lng"
-          pointColor="color"
+          pointColor="markerColor"
           pointAltitude={0.09}
-          pointRadius={0.7}
+          pointRadius={0.75}
           pointLabel={(d) => (d as CityEntry).name}
           pointsMerge={false}
           pointsTransitionDuration={0}
           labelsData={pointsData}
           labelLat="lat"
           labelLng="lng"
-          labelAltitude={0.1}
+          labelAltitude={0.11}
           labelText="name"
-          labelSize={1.1}
-          labelDotRadius={0.45}
-          labelColor="color"
-          labelResolution={2}
-          labelIncludeDot
+          labelSize={1.25}
+          labelDotRadius={0}
+          labelColor="labelColor"
+          labelResolution={3}
+          labelIncludeDot={false}
           labelsTransitionDuration={0}
           rendererConfig={{
             antialias: true,
