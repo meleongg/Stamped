@@ -377,6 +377,11 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
         onReset={handleReset}
       />
       {showExport && <ExportButton svgRef={svgRef} />}
+      {!showCityPins && stampedCities.length > 0 && (
+        <p className="bg-card/90 text-muted-foreground pointer-events-none absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-md px-2 py-1 text-xs shadow-md">
+          Zoom in to see city stamps
+        </p>
+      )}
 
       <svg
         ref={svgRef}

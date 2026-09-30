@@ -2,15 +2,18 @@
 
 import { CitySidebar } from "@/app/components/CitySidebar";
 import { CountrySearch } from "@/app/components/CountrySearch";
+import { GlobeView } from "@/app/components/GlobeView";
 import { useHowToUse } from "@/app/components/HowToUseProvider";
 import { Journal } from "@/app/components/Journal";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
+import { MapViewToggle } from "@/app/components/MapViewToggle";
 import { NoteSidebar } from "@/app/components/NoteSidebar";
 import { ReplayControls } from "@/app/components/ReplayControls";
 import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
+import { useMapViewMode } from "@/app/hooks/useMapViewMode";
 import { CityCatalogEntry, CityEntry, TravelStatus } from "@/app/types";
 import { countryCodesMatch } from "@/app/utils/countryCodes";
 import { getCountryNameByCode } from "@/app/utils/countryNames";
@@ -93,6 +96,8 @@ export default function Home() {
   const autoOpenedHelpRef = useRef(false);
   const [replayActive, setReplayActive] = useState(false);
   const [replayScrubIndex, setReplayScrubIndex] = useState(-1);
+  const { mode: mapViewMode, setMode: setMapViewMode } = useMapViewMode();
+  const isGlobe = mapViewMode === "globe";
 
   const stats = useMemo(() => computeStats(travelMapData), [travelMapData]);
 
@@ -190,7 +195,9 @@ export default function Home() {
 
   const handleSearchSelectCountry = (countryCode: string) => {
     setSelectedCountry(countryCode);
-    mapRef.current?.focusCountry(countryCode);
+    if (!isGlobe) {
+      mapRef.current?.focusCountry(countryCode);
+    }
   };
 
   const handleSearchSelectCity = (city: CityCatalogEntry) => {
@@ -208,7 +215,9 @@ export default function Home() {
       }
     }
     setSelectedCityId(city.id);
-    mapRef.current?.focusCity(city.id, city.lat, city.lng);
+    if (!isGlobe) {
+      mapRef.current?.focusCity(city.id, city.lat, city.lng);
+    }
   };
 
   const handleCityClick = (cityId: string) => {
@@ -231,7 +240,9 @@ export default function Home() {
   const handleJournalFocusCountry = (countryCode: string) => {
     setSelectedCityId(null);
     setSelectedCountry(countryCode);
-    mapRef.current?.focusCountry(countryCode);
+    if (!isGlobe) {
+      mapRef.current?.focusCountry(countryCode);
+    }
   };
 
   const handleJournalFocusCity = (cityId: string) => {
@@ -239,7 +250,9 @@ export default function Home() {
     if (!city) return;
     setSelectedCountry(null);
     setSelectedCityId(cityId);
-    mapRef.current?.focusCity(cityId, city.lat, city.lng);
+    if (!isGlobe) {
+      mapRef.current?.focusCity(cityId, city.lat, city.lng);
+    }
   };
 
   const handleJournalSetVisitDate = (
@@ -297,29 +310,44 @@ export default function Home() {
           />
         </div>
         <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
-          <CountrySearch
-            countries={countries}
-            getCountryStatus={getCountryStatus}
-            getCityStatus={(id) => getCityData(id)?.status ?? null}
-            onSelectCountry={handleSearchSelectCountry}
-            onSelectCity={handleSearchSelectCity}
-          />
+          <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <CountrySearch
+                countries={countries}
+                getCountryStatus={getCountryStatus}
+                getCityStatus={(id) => getCityData(id)?.status ?? null}
+                onSelectCountry={handleSearchSelectCountry}
+                onSelectCity={handleSearchSelectCity}
+              />
+            </div>
+            <MapViewToggle mode={mapViewMode} onModeChange={setMapViewMode} />
+          </div>
           <div className="border-border bg-card mx-auto flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
-              <MapView
-                ref={mapRef}
-                getCountryStatus={getDisplayCountryStatus}
-                onCountryClick={handleCountryClick}
-                selectedCountry={selectedCountry}
-                hoveredCountry={hoveredCountry}
-                onCountryHover={setHoveredCountry}
-                stampedCities={displayStampedCities}
-                selectedCityId={selectedCityId}
-                onCityClick={handleCityClick}
-                countries={countries}
-                isLoading={false}
-                readonly={replayActive}
-              />
+              {isGlobe ? (
+                <GlobeView
+                  getCountryStatus={getDisplayCountryStatus}
+                  stampedCities={displayStampedCities}
+                  countries={countries}
+                  selectedCountry={selectedCountry}
+                  selectedCityId={selectedCityId}
+                />
+              ) : (
+                <MapView
+                  ref={mapRef}
+                  getCountryStatus={getDisplayCountryStatus}
+                  onCountryClick={handleCountryClick}
+                  selectedCountry={selectedCountry}
+                  hoveredCountry={hoveredCountry}
+                  onCountryHover={setHoveredCountry}
+                  stampedCities={displayStampedCities}
+                  selectedCityId={selectedCityId}
+                  onCityClick={handleCityClick}
+                  countries={countries}
+                  isLoading={false}
+                  readonly={replayActive}
+                />
+              )}
             </div>
           </div>
           <div className="mx-auto flex w-full max-w-4xl justify-center">
