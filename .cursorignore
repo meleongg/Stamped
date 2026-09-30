@@ -1,1 +1,3 @@
-.env.local
+# Keep secret env files out of agent/IDE context. Matches .gitignore intent.
+.env*
+!.env.example

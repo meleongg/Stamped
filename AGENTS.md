@@ -76,9 +76,13 @@ component tests are optional unless complex UI state makes them worthwhile.
   (utils / lib / components / API), not by dumping unrelated helpers together.
 - **Git Hygiene:** Never commit directly to default branches (`main`). Create
   clean, short-lived feature branches prefixed with `feat/` or `fix/`.
-- **Secrets:** Never open, print, parse, modify, or otherwise read `.env*`
-  files. Use only documented variable names and ask the user to configure secret
-  values when needed.
+- **Secrets (hard rule):** Do not open `.env` files. Do not open, read, print,
+  parse, diff, copy, modify, or otherwise access any `.env*` file (including
+  `.env`, `.env.local`, `.env.development.local`, `.env.production.local`, and
+  similar). This applies even when debugging, writing docs, or the user asks
+  you to "check env" — refuse and ask them to paste only the non-secret names
+  or values they intentionally share. Use only documented variable names from
+  `.env.example` / README and ask the user to configure secret values.
 - **External-service safety:** Treat Upstash Redis, Vercel environments,
   browser storage, and bundled/generated geographic data as production-
   sensitive. Never flush, delete, or otherwise destructively modify production
