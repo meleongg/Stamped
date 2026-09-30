@@ -53,4 +53,64 @@ export const formatShareExpiry = (expiresAt: string): string =>
     day: "numeric",
   });
 
+/** Whole days remaining until expiry (0 if expired or today). Display-only. */
+export const shareExpiryDaysRemaining = (
+  expiresAt: string,
+  now: Date = new Date(),
+): number => {
+  const end = new Date(expiresAt).getTime();
+  if (Number.isNaN(end)) return 0;
+  const ms = end - now.getTime();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+};
+
+/** e.g. "Expires March 30, 2026 · in 89 days" */
+export const formatShareExpiryLabel = (
+  expiresAt: string,
+  now: Date = new Date(),
+): string => {
+  const date = formatShareExpiry(expiresAt);
+  const days = shareExpiryDaysRemaining(expiresAt, now);
+  if (days <= 0) return `Expired ${date}`;
+  if (days === 1) return `Expires ${date} · tomorrow`;
+  return `Expires ${date} · in ${days} days`;
+};
+
+export type ShareLinkErrorCode = "invalid_id" | "not_found" | "expired";
+
+export interface ShareLinkErrorCopy {
+  title: string;
+  message: string;
+  nextStep: string;
+}
+
+/** Friendly copy for expired / broken share pages (UI only). */
+export const describeShareLinkError = (
+  code: ShareLinkErrorCode | null | undefined,
+): ShareLinkErrorCopy => {
+  if (code === "expired") {
+    return {
+      title: "This share link has expired",
+      message:
+        "Shared maps stay available for 90 days of inactivity, then they retire automatically.",
+      nextStep: "Ask the sender to open Share again and send you a fresh link.",
+    };
+  }
+  if (code === "invalid_id") {
+    return {
+      title: "This share link looks incomplete",
+      message:
+        "The link may have been copied wrong, or part of it is missing.",
+      nextStep: "Ask the sender to copy the link again from Share.",
+    };
+  }
+  return {
+    title: "This share link looks broken",
+    message:
+      "We couldn't find a map for this link. It may have expired, been mistyped, or never existed.",
+    nextStep: "Ask the sender to share again, or start your own map.",
+  };
+};
+
 export { EMPTY_TRAVEL_MAP } from "../types";

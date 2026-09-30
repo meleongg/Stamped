@@ -20,11 +20,12 @@ import {
   MessageCircle,
   Share2,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TravelMapData } from "../types";
 import {
-  formatShareExpiry,
+  formatShareExpiryLabel,
   formatShareNativeText,
   formatShareNativeTitle,
   isValidName,
@@ -62,6 +63,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   const [shareUrl, setShareUrl] = useState("");
   const [shareId, setShareId] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [linkCreated, setLinkCreated] = useState(false);
+  const [linkUpdated, setLinkUpdated] = useState(false);
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
@@ -91,6 +94,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       setShareUrl(result.url);
       setShareId(result.shareId);
       setExpiresAt(result.expiresAt);
+      setLinkCreated(result.created);
+      setLinkUpdated(result.updated);
     } catch (error) {
       if (requestId !== linkRequestRef.current) return;
       const message =
@@ -101,6 +106,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       setShareUrl("");
       setShareId("");
       setExpiresAt("");
+      setLinkCreated(false);
+      setLinkUpdated(false);
     } finally {
       if (requestId === linkRequestRef.current) {
         setLinkLoading(false);
@@ -233,12 +240,45 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Share your travel map</DialogTitle>
           <DialogDescription>
-            We&apos;ll store your map name and travel statuses on our servers
-            for 90 days. Notes and dates stay private on your device.
+            Create a link friends can open. You can update it anytime from this
+            browser.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          <ul className="bg-muted/60 text-muted-foreground space-y-1.5 rounded-md px-3 py-2.5 text-xs leading-relaxed">
+            <li className="flex gap-2">
+              <span aria-hidden className="text-foreground shrink-0">
+                •
+              </span>
+              <span>
+                Shared: map name and country/city statuses (for 90 days of
+                inactivity).
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span aria-hidden className="text-foreground shrink-0">
+                •
+              </span>
+              <span>Private on this device: notes and visit dates.</span>
+            </li>
+            <li className="flex gap-2">
+              <span aria-hidden className="text-foreground shrink-0">
+                •
+              </span>
+              <span>
+                Details in{" "}
+                <Link
+                  href="/privacy"
+                  className="text-foreground underline underline-offset-2"
+                >
+                  Privacy
+                </Link>
+                .
+              </span>
+            </li>
+          </ul>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="share-name" className="w-fit gap-0">
               Map name<span className="text-red-500">*</span>
@@ -259,15 +299,20 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
 
           {totalCountries === 0 ? (
             <p className="text-muted-foreground text-sm">
-              Add at least one country to your map first.
+              Add at least one country to your map, then come back to share.
             </p>
           ) : !isValidName(name) ? (
             <p className="text-muted-foreground text-sm">
-              Enter a map name to generate a share link.
+              Give your map a short name to generate a link.
             </p>
           ) : linkError ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-destructive text-sm">{linkError}</p>
+            <div className="border-destructive/30 bg-destructive/5 flex flex-col gap-2 rounded-md border px-3 py-3">
+              <p className="text-destructive text-sm font-medium">
+                Couldn&apos;t create a share link
+              </p>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {linkError}
+              </p>
               <Button
                 type="button"
                 variant="outline"
@@ -307,11 +352,25 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                   </Button>
                 </div>
                 {expiresAt && !linkLoading && (
-                  <p className="text-muted-foreground text-xs">
-                    Link active until {formatShareExpiry(expiresAt)}. Shared
-                    link updates when you open Share — your map may have changed
-                    since last sync.
-                  </p>
+                  <div className="text-muted-foreground flex flex-col gap-1 text-xs leading-relaxed">
+                    <p className="text-foreground font-medium">
+                      {formatShareExpiryLabel(expiresAt)}
+                    </p>
+                    {linkCreated ? (
+                      <p>
+                        New link created for this browser. Older links (if any)
+                        keep working until they expire, but updates from here go
+                        to this one.
+                      </p>
+                    ) : linkUpdated ? (
+                      <p>Your shared map was updated to match this device.</p>
+                    ) : (
+                      <p>
+                        Opening Share refreshes the link when your map has
+                        changed.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -329,8 +388,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
                     />
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    This is the image friends will see in iMessage, Twitter,
-                    Discord, etc.
+                    Preview image for iMessage, Discord, and similar apps.
                   </p>
                 </div>
               )}

@@ -1,15 +1,16 @@
 import { STATUS_LABELS } from "@/app/constants";
+import { ShareLinkErrorView } from "@/app/components/ShareLinkErrorView";
 import { SharedMapView } from "@/app/m/[data]/SharedMapView";
 import { resolveShareOrThrow, ShareStoreError } from "@/app/lib/shareStore";
 import { TravelStatus } from "@/app/types";
 import {
+  formatShareExpiryLabel,
   formatSharedMapHeading,
   formatSharedMapPageTitle,
 } from "@/app/utils/share";
 import { shareStoreErrorToLinkError } from "@/app/lib/shareStore";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 interface PageParams {
   data: string;
@@ -75,24 +76,6 @@ export async function generateMetadata({
   }
 }
 
-function ShareLinkErrorPage({
-  title,
-  message,
-}: {
-  title: string;
-  message: string;
-}) {
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
-      <h1 className="text-foreground mb-3 text-2xl font-bold">{title}</h1>
-      <p className="text-muted-foreground mb-6 text-sm">{message}</p>
-      <Button asChild variant="default">
-        <Link href="/">Go to your own map</Link>
-      </Button>
-    </div>
-  );
-}
-
 export default async function SharedMapPage({ params }: PageProps) {
   const { data: shareId } = await params;
 
@@ -104,39 +87,46 @@ export default async function SharedMapPage({ params }: PageProps) {
       error instanceof ShareStoreError
         ? shareStoreErrorToLinkError(error)
         : null;
-    const title =
-      linkError?.code === "expired"
-        ? "This share link has expired"
-        : "This share link looks broken";
-    const message =
-      linkError?.message ??
-      "Couldn't read this share link. Ask the sender to share again.";
-    return <ShareLinkErrorPage title={title} message={message} />;
+    return <ShareLinkErrorView code={linkError?.code ?? null} />;
   }
 
   const counts = countByStatus(share.data.countries);
   const total = Object.keys(share.data.countries).length;
   const cityCount = Object.keys(share.data.cities).length;
+  const isEmpty = total === 0 && cityCount === 0;
+  const summary = isEmpty
+    ? "This shared map does not have any places yet."
+    : [
+        ...statusOrder.map(
+          (s) => `${counts[s] || 0} ${STATUS_LABELS[s].toLowerCase()}`,
+        ),
+        cityCount > 0 ? `${cityCount} cities` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <h1 className="text-foreground text-3xl font-bold">
-          {formatSharedMapHeading(share.name)}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {total === 0 && cityCount === 0
-            ? "No countries marked yet."
-            : [
-                ...statusOrder.map(
-                  (s) => `${counts[s] || 0} ${STATUS_LABELS[s].toLowerCase()}`,
-                ),
-                cityCount > 0 ? `${cityCount} cities` : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
+      <header className="mb-6 flex flex-col gap-3">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          Shared map
         </p>
-      </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-foreground text-3xl font-bold tracking-tight">
+              {formatSharedMapHeading(share.name)}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">{summary}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">Read-only</Badge>
+            <Badge variant="outline">Notes not shared</Badge>
+          </div>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {formatShareExpiryLabel(share.expiresAt)}
+        </p>
+      </header>
 
       <SharedMapView
         shareId={shareId}
