@@ -41,31 +41,34 @@ export const createGlobeCityChip = (
   city: CityEntry,
   options: { selected?: boolean } = {},
 ): HTMLElement => {
+  // Root is positioned by Three CSS2DRenderer (overwrites transform). Offset
+  // lives on an inner wrapper so the nudge survives each frame.
   const root = document.createElement("div");
-  root.style.display = "flex";
-  root.style.alignItems = "center";
-  root.style.gap = "6px";
-  root.style.padding = "4px 8px 4px 6px";
-  root.style.borderRadius = "999px";
-  root.style.background = GLOBE_CITY_CHIP.background;
-  root.style.color = GLOBE_CITY_CHIP.foreground;
-  root.style.border = `1px solid ${
+  root.style.pointerEvents = "none";
+  root.style.userSelect = "none";
+  root.setAttribute("aria-label", city.name);
+
+  const chip = document.createElement("div");
+  chip.style.display = "flex";
+  chip.style.alignItems = "center";
+  chip.style.gap = "6px";
+  chip.style.padding = "4px 8px 4px 6px";
+  chip.style.borderRadius = "999px";
+  chip.style.background = GLOBE_CITY_CHIP.background;
+  chip.style.color = GLOBE_CITY_CHIP.foreground;
+  chip.style.border = `1px solid ${
     options.selected
       ? GLOBE_CITY_CHIP.selectedBorder
       : GLOBE_CITY_CHIP.border
   }`;
-  root.style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.35)";
-  root.style.fontFamily =
+  chip.style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.35)";
+  chip.style.fontFamily =
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif";
-  root.style.fontSize = "11px";
-  root.style.fontWeight = "600";
-  root.style.lineHeight = "1";
-  root.style.whiteSpace = "nowrap";
-  root.style.pointerEvents = "none";
-  root.style.userSelect = "none";
-  // Sit the chip up and to the right of the city so the pin doesn't cover the spot.
-  root.style.transform = "translate(10px, -14px)";
-  root.setAttribute("aria-label", city.name);
+  chip.style.fontSize = "11px";
+  chip.style.fontWeight = "600";
+  chip.style.lineHeight = "1";
+  chip.style.whiteSpace = "nowrap";
+  chip.style.transform = "translate(10px, -14px)";
 
   const pin = document.createElement("span");
   pin.style.display = "inline-block";
@@ -80,6 +83,7 @@ export const createGlobeCityChip = (
   label.textContent = city.name;
   label.style.color = GLOBE_CITY_CHIP.foreground;
 
-  root.append(pin, label);
+  chip.append(pin, label);
+  root.append(chip);
   return root;
 };

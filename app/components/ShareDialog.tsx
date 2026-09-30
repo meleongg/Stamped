@@ -32,7 +32,7 @@ import {
   sanitizeName,
   SHARE_NAME_MAX,
 } from "../utils/share";
-import { canonicalSharePayload, hashSharePayload } from "../utils/sharePayload";
+import { canonicalSharePayload, hashSharePayload, hasShareableContent } from "../utils/sharePayload";
 import { ensureShareLink, persistShareName } from "../utils/shareClient";
 import {
   getDesktopShareActions,
@@ -72,7 +72,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
 
   const trimmedName = sanitizeName(name);
   const countryCount = Object.keys(travelMapData.countries).length;
-  const canShare = isValidName(name) && countryCount > 0;
+  const cityCount = Object.keys(travelMapData.cities).length;
+  const canShare = isValidName(name) && hasShareableContent(travelMapData);
+  const hasContent = hasShareableContent(travelMapData);
 
   const syncShareLink = useCallback(async () => {
     if (!canShare || typeof window === "undefined") return;
@@ -154,7 +156,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       persistShareName(trimmedName);
       setCopied(true);
       toast.success("Link copied to clipboard");
-      track("share_link_copied", { countries: countryCount });
+      track("share_link_copied", {
+        countries: countryCount,
+        cities: cityCount,
+      });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Couldn't copy. Select the link and copy manually.");
@@ -169,7 +174,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       if (result === "shared") {
         persistShareName(trimmedName);
         toast.success("Shared successfully");
-        track("share_link_native", { countries: countryCount });
+        track("share_link_native", {
+          countries: countryCount,
+          cities: cityCount,
+        });
       } else if (result === "unavailable") {
         setShareMenuOpen(true);
       }
@@ -194,8 +202,6 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       setShareMenuOpen(false);
     }
   };
-
-  const totalCountries = countryCount;
 
   useEffect(() => {
     if (!shareMenuOpen) return;
@@ -225,10 +231,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
         <Button
           variant={triggerVariant}
           className="flex w-full cursor-pointer items-center justify-center gap-2"
-          disabled={totalCountries === 0}
+          disabled={!hasContent}
           title={
-            totalCountries === 0
-              ? "Add at least one country before sharing"
+            !hasContent
+              ? "Add at least one country or city before sharing"
               : "Share your map"
           }
         >
@@ -297,9 +303,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
             </p>
           </div>
 
-          {totalCountries === 0 ? (
+          {!hasContent ? (
             <p className="text-muted-foreground text-sm">
-              Add at least one country to your map, then come back to share.
+              Add at least one country or city to your map, then come back to
+              share.
             </p>
           ) : !isValidName(name) ? (
             <p className="text-muted-foreground text-sm">

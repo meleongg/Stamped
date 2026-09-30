@@ -38,6 +38,17 @@ const writeState = (state: ShareLinkState): void => {
   window.localStorage.setItem(SHARE_EXPIRES_AT_KEY, state.expiresAt);
 };
 
+/** True when a cached share expiry is still in the future. */
+export const isShareCacheFresh = (
+  expiresAt: string | undefined,
+  now: number = Date.now(),
+): boolean => {
+  if (!expiresAt) return false;
+  const end = new Date(expiresAt).getTime();
+  if (Number.isNaN(end)) return false;
+  return end > now;
+};
+
 export const ensureShareLink = async (
   payload: SharePayload,
   payloadHash: string,
@@ -51,13 +62,13 @@ export const ensureShareLink = async (
   if (
     cached.shareId &&
     cached.payloadHash === payloadHash &&
-    cached.expiresAt
+    isShareCacheFresh(cached.expiresAt)
   ) {
     const origin = window.location.origin.replace(/\/$/, "");
     return {
       url: `${origin}/m/${cached.shareId}`,
       shareId: cached.shareId,
-      expiresAt: cached.expiresAt,
+      expiresAt: cached.expiresAt!,
       created: false,
       updated: false,
     };

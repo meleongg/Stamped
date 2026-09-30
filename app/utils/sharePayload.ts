@@ -68,8 +68,13 @@ export const canonicalSharePayload = (payload: SharePayload): SharePayload => {
 export const isValidShareName = (raw: string): boolean =>
   sanitizeShareName(raw).length > 0;
 
-export const hasShareableContent = (data: TravelMapData): boolean =>
-  Object.keys(stripForShare(data).countries).length > 0;
+export const hasShareableContent = (data: TravelMapData): boolean => {
+  const stripped = stripForShare(data);
+  return (
+    Object.keys(stripped.countries).length > 0 ||
+    Object.keys(stripped.cities).length > 0
+  );
+};
 
 const canonicalJson = (payload: SharePayload): string =>
   JSON.stringify(canonicalSharePayload(payload));
@@ -134,7 +139,7 @@ export const parseSharePayloadBody = (body: unknown): SharePayload => {
     throw new Error("Map name is required.");
   }
   if (!hasShareableContent(canonical.data)) {
-    throw new Error("Add at least one country before sharing.");
+    throw new Error("Add at least one country or city before sharing.");
   }
   for (const entry of Object.values(canonical.data.countries)) {
     if (!validateCountryEntry(entry)) {

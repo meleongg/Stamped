@@ -17,6 +17,7 @@ interface CountrySearchProps {
   onSelectCity?: (city: CityCatalogEntry) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const MAX_RESULTS = 8;
@@ -33,6 +34,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
   onSelectCity,
   placeholder = "Search countries & cities...",
   className,
+  disabled = false,
 }) => {
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -41,6 +43,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (disabled) return;
     const onKeydown = (e: KeyboardEvent) => {
       const cmd = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
       if (cmd) {
@@ -51,7 +54,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
     };
     window.addEventListener("keydown", onKeydown);
     return () => window.removeEventListener("keydown", onKeydown);
-  }, []);
+  }, [disabled]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -130,7 +133,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
     }
   };
 
-  const showDropdown = open && query.trim().length > 0;
+  const showDropdown = !disabled && open && query.trim().length > 0;
 
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
@@ -142,6 +145,7 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
         <Input
           ref={inputRef}
           value={query}
+          disabled={disabled}
           onChange={(e) => {
             setQuery(e.target.value);
             setHighlight(0);
@@ -149,7 +153,9 @@ export const CountrySearch: React.FC<CountrySearchProps> = ({
           }}
           onFocus={() => query.trim() && setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={
+            disabled ? "Search paused during Replay" : placeholder
+          }
           className="pr-16 pl-8"
           aria-label="Search countries and cities"
           aria-autocomplete="list"

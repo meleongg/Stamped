@@ -33,14 +33,18 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
   const maxIndex = Math.max(events.length - 1, 0);
   const hasEvents = events.length > 0;
+  // Clamp for display/play when the timeline shrinks (e.g. journal date edits).
+  const safeScrubIndex = hasEvents
+    ? Math.min(Math.max(scrubIndex, -1), maxIndex)
+    : -1;
   const effectivelyPlaying = playing && active && hasEvents;
 
   useEffect(() => {
     if (!effectivelyPlaying) return;
-    if (scrubIndex >= maxIndex) return;
+    if (safeScrubIndex >= maxIndex) return;
 
     const timer = window.setTimeout(() => {
-      const next = scrubIndex + 1;
+      const next = safeScrubIndex + 1;
       onScrubIndexChange(next);
       if (next >= maxIndex) {
         setPlaying(false);
@@ -50,7 +54,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
     return () => window.clearTimeout(timer);
   }, [
     effectivelyPlaying,
-    scrubIndex,
+    safeScrubIndex,
     maxIndex,
     speed,
     onScrubIndexChange,
@@ -63,7 +67,8 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
       return;
     }
     onActiveChange(true);
-    onScrubIndexChange(hasEvents ? maxIndex : -1);
+    // Begin at the start so Play reveals travels in order.
+    onScrubIndexChange(-1);
   };
 
   const handleReset = () => {
@@ -73,7 +78,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
   const handlePlayPause = () => {
     if (!hasEvents || !active) return;
-    if (scrubIndex >= maxIndex) {
+    if (safeScrubIndex >= maxIndex) {
       onScrubIndexChange(-1);
       setPlaying(true);
       return;
@@ -105,7 +110,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
         <p className="text-muted-foreground text-xs leading-relaxed">
           Add visit dates in Journal first, then you can replay your map here.
           {undatedCount > 0
-            ? ` ${undatedCount} visited ${undatedCount === 1 ? "place still needs" : "places still need"} a date.`
+            ? ` ${undatedCount} visited ${undatedCount === 1 ? "place still needs" : "places still need"} an explicit visit date (stamp day alone is enough for cities to appear).`
             : ""}
         </p>
       ) : (
@@ -113,10 +118,10 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="replay-scrub" className="text-xs">
-                {formatReplayCursorLabel(events, scrubIndex)}
+                {formatReplayCursorLabel(events, safeScrubIndex)}
               </Label>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {scrubIndex < 0 ? 0 : scrubIndex + 1}/{events.length}
+                {safeScrubIndex < 0 ? 0 : safeScrubIndex + 1}/{events.length}
               </span>
             </div>
             <input
@@ -125,14 +130,14 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
               min={-1}
               max={maxIndex}
               step={1}
-              value={scrubIndex}
+              value={safeScrubIndex}
               disabled={!active}
               onChange={(event) => {
                 setPlaying(false);
                 onScrubIndexChange(Number(event.target.value));
               }}
               className="accent-primary w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-              aria-valuetext={formatReplayCursorLabel(events, scrubIndex)}
+              aria-valuetext={formatReplayCursorLabel(events, safeScrubIndex)}
             />
           </div>
 
@@ -184,9 +189,9 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
           {active && undatedCount > 0 && (
             <p className="text-muted-foreground text-xs leading-relaxed">
               {undatedCount} visited{" "}
-              {undatedCount === 1 ? "place is" : "places are"} missing a date, so{" "}
-              {undatedCount === 1 ? "it stays" : "they stay"} off the replay until
-              you add one in Journal.
+              {undatedCount === 1 ? "place is" : "places are"} missing an
+              explicit visit date. Cities still appear on their stamp day;
+              undated countries stay off replay until you add a date in Journal.
             </p>
           )}
         </>

@@ -53,3 +53,29 @@ export const getCountryCode = (feature: CountryFeature): string =>
 
 export const getCountryName = (feature: CountryFeature): string =>
   feature.properties.name;
+
+/** Approximate geographic focus from the exterior ring (average of vertices). */
+export const featureFocusLatLng = (
+  feature: CountryFeature,
+): { lat: number; lng: number } | null => {
+  const geometry = feature.geometry;
+  let ring: number[][] | undefined;
+  if (geometry.type === "Polygon") {
+    ring = geometry.coordinates[0];
+  } else if (geometry.type === "MultiPolygon") {
+    ring = geometry.coordinates[0]?.[0];
+  }
+  if (!ring || ring.length === 0) return null;
+
+  let latSum = 0;
+  let lngSum = 0;
+  let count = 0;
+  for (const coord of ring) {
+    if (coord.length < 2) continue;
+    lngSum += coord[0];
+    latSum += coord[1];
+    count += 1;
+  }
+  if (count === 0) return null;
+  return { lat: latSum / count, lng: lngSum / count };
+};

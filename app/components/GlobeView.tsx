@@ -10,7 +10,7 @@ import {
   globeSideColor,
   globeStrokeColor,
 } from "@/app/utils/globeColors";
-import { CountryFeature, getCountryCode, getCountryName } from "@/app/utils/geo";
+import { CountryFeature, getCountryCode, getCountryName, featureFocusLatLng } from "@/app/utils/geo";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GlobeMethods } from "react-globe.gl";
@@ -86,14 +86,9 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
         (c) => getCountryCode(c) === selectedCountry,
       );
       if (!feature) return;
-      if (feature.geometry.type === "Polygon") {
-        const [lng, lat] = feature.geometry.coordinates[0]?.[0] ?? [0, 0];
-        globe.pointOfView({ lat, lng, altitude: 1.6 }, 800);
-      } else if (feature.geometry.type === "MultiPolygon") {
-        const [lng, lat] =
-          feature.geometry.coordinates[0]?.[0]?.[0] ?? [0, 0];
-        globe.pointOfView({ lat, lng, altitude: 1.6 }, 800);
-      }
+      const focus = featureFocusLatLng(feature);
+      if (!focus) return;
+      globe.pointOfView({ lat: focus.lat, lng: focus.lng, altitude: 1.6 }, 800);
     }
   }, [selectedCityId, selectedCountry, stampedCities, countries]);
 

@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   canonicalSharePayload,
+  hasShareableContent,
   parseSharePayloadBody,
   sanitizeShareName,
   stripForShare,
 } from "@/app/utils/sharePayload";
+import { isShareCacheFresh } from "@/app/utils/shareClient";
 
 const privateMap = {
   countries: {
@@ -72,8 +74,26 @@ describe("share payload privacy and canonicalization", () => {
     expect(() =>
       parseSharePayloadBody({
         name: "Empty",
-        data: { countries: {}, cities: privateMap.cities },
+        data: { countries: {}, cities: {} },
       }),
-    ).toThrow("Add at least one country before sharing.");
+    ).toThrow("Add at least one country or city before sharing.");
+  });
+
+  it("allows city-only share payloads", () => {
+    expect(
+      hasShareableContent({ countries: {}, cities: privateMap.cities }),
+    ).toBe(true);
+    const parsed = parseSharePayloadBody({
+      name: "Cities",
+      data: { countries: {}, cities: privateMap.cities },
+    });
+    expect(Object.keys(parsed.data.cities)).toEqual(["vancouver"]);
+  });
+
+  it("treats expired share cache timestamps as stale", () => {
+    const now = Date.parse("2026-09-30T12:00:00.000Z");
+    expect(isShareCacheFresh("2026-09-29T12:00:00.000Z", now)).toBe(false);
+    expect(isShareCacheFresh("2026-10-01T12:00:00.000Z", now)).toBe(true);
+    expect(isShareCacheFresh(undefined, now)).toBe(false);
   });
 });
