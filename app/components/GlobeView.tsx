@@ -127,8 +127,8 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
           polygonAltitude={(d) => {
             const feature = d as CountryFeature;
             const code = getCountryCode(feature);
-            if (selectedCountry && selectedCountry === code) return 0.02;
-            return getCountryStatus(code) ? 0.012 : 0.004;
+            if (selectedCountry && selectedCountry === code) return 0.01;
+            return getCountryStatus(code) ? 0.006 : 0.002;
           }}
           polygonLabel={(d) => getCountryName(d as CountryFeature)}
           polygonsTransitionDuration={200}
@@ -136,10 +136,22 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
           pointLat="lat"
           pointLng="lng"
           pointColor="color"
-          pointAltitude={0.02}
-          pointRadius={0.35}
+          pointAltitude={0.09}
+          pointRadius={0.7}
           pointLabel={(d) => (d as CityEntry).name}
-          pointsTransitionDuration={200}
+          pointsMerge={false}
+          pointsTransitionDuration={0}
+          labelsData={pointsData}
+          labelLat="lat"
+          labelLng="lng"
+          labelAltitude={0.1}
+          labelText="name"
+          labelSize={1.1}
+          labelDotRadius={0.45}
+          labelColor="color"
+          labelResolution={2}
+          labelIncludeDot
+          labelsTransitionDuration={0}
           rendererConfig={{
             antialias: true,
             alpha: true,
