@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "validate": "npm run lint && npx tsc --noEmit && npm run test",
     "format": "prettier --write .",
     "build:cities": "node scripts/build-city-catalog.mjs"
   },
