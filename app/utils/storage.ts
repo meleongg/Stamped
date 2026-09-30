@@ -79,6 +79,10 @@ export const updateCountryEntry = (
     ...updates,
   };
 
+  if (updatedEntry.status !== "visited") {
+    updatedEntry.visitedAt = undefined;
+  }
+
   return {
     ...data,
     [countryCode]: updatedEntry,
