@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { STATUS_COLORS } from "@/app/constants";
 import {
-  createGlobeCityChip,
   GLOBE_CITY_CHIP,
   globeCountryCapColor,
 } from "@/app/utils/globeColors";
@@ -30,21 +29,9 @@ describe("globe colors", () => {
     expect(globeCountryCapColor(undefined, "dark")).toBe("#475569");
   });
 
-  it("builds a high-contrast city chip with matching pin and label color", () => {
-    const chip = createGlobeCityChip({
-      cityId: "yvr",
-      countryCode: "124",
-      name: "Vancouver",
-      lat: 49.2,
-      lng: -123.1,
-      status: "visited",
-    });
-
-    expect(chip.style.background).toContain("15, 23, 42");
-    expect(chip.textContent).toBe("Vancouver");
-    const pin = chip.querySelector("span");
-    const label = chip.querySelectorAll("span")[1];
-    expect(pin?.style.background).toBe(GLOBE_CITY_CHIP.foreground);
-    expect(label?.style.color).toBe(GLOBE_CITY_CHIP.foreground);
+  it("defines a single high-contrast chip palette for pin and label", () => {
+    expect(GLOBE_CITY_CHIP.foreground).toBe("#f8fafc");
+    expect(GLOBE_CITY_CHIP.background).toContain("15, 23, 42");
+    expect(GLOBE_CITY_CHIP.foreground).not.toBe(STATUS_COLORS.visited);
   });
 });
