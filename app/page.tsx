@@ -55,9 +55,15 @@ const isSidebarInteraction = (target: Node): boolean => {
 const promptMissingVisitDate = (
   placeName: string,
   onUseToday: () => void,
+  options?: { stamped?: boolean },
 ): void => {
-  toast.message(`Add a visit date for ${placeName}?`, {
-    description: "Optional — builds your journal. Skip anytime.",
+  const title = options?.stamped
+    ? `Stamped · ${placeName}`
+    : `Add a visit date for ${placeName}?`;
+  toast.success(title, {
+    description: options?.stamped
+      ? "Add a visit date? Optional — builds your journal."
+      : "Optional — builds your journal. Skip anytime.",
     action: {
       label: "Use today",
       onClick: onUseToday,
@@ -203,15 +209,21 @@ export default function Home() {
   const handleSearchSelectCity = (city: CityCatalogEntry) => {
     if (!isCityStamped(city.id)) {
       stampCity(city.id);
-      toast.success(`Stamped · ${city.name}`);
       // New stamps default toward visited when country is visited / unset.
       const countryStatus = getCountryStatus(city.countryCode);
       const willBeVisited =
         countryStatus === "visited" || countryStatus === null;
       if (willBeVisited) {
-        promptMissingVisitDate(city.name, () => {
-          updateCity(city.id, { visitedAt: visitDateForToday() });
-        });
+        // One toast: stamp confirmation + optional visit-date action.
+        promptMissingVisitDate(
+          city.name,
+          () => {
+            updateCity(city.id, { visitedAt: visitDateForToday() });
+          },
+          { stamped: true },
+        );
+      } else {
+        toast.success(`Stamped · ${city.name}`);
       }
     }
     setSelectedCityId(city.id);
