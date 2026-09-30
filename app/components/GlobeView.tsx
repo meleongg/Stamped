@@ -4,16 +4,15 @@ import { MAP_DIMENSIONS } from "@/app/constants";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { CityEntry, TravelStatus } from "@/app/types";
 import {
+  createGlobeCityChip,
   globeBackgroundColor,
-  globeCityLabelColor,
-  globeCityMarkerColor,
   globeCountryCapColor,
   globeSideColor,
   globeStrokeColor,
 } from "@/app/utils/globeColors";
 import { CountryFeature, getCountryCode, getCountryName } from "@/app/utils/geo";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GlobeMethods } from "react-globe.gl";
 
 const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
@@ -56,22 +55,19 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  const markerColor = globeCityMarkerColor(theme);
-  const labelColor = globeCityLabelColor(theme);
-
-  const pointsData = useMemo(
-    () =>
-      stampedCities.map((city) => ({
-        ...city,
-        markerColor,
-        labelColor,
-      })),
-    [stampedCities, markerColor, labelColor],
-  );
-
   const bg = globeBackgroundColor(theme);
   const side = globeSideColor(theme);
   const stroke = globeStrokeColor(theme);
+
+  const buildCityChip = useCallback(
+    (d: object) => {
+      const city = d as CityEntry;
+      return createGlobeCityChip(city, {
+        selected: selectedCityId === city.cityId,
+      });
+    },
+    [selectedCityId],
+  );
 
   useEffect(() => {
     const globe = globeRef.current;
@@ -137,26 +133,12 @@ export const GlobeView: React.FC<GlobeViewProps> = ({
           }}
           polygonLabel={(d) => getCountryName(d as CountryFeature)}
           polygonsTransitionDuration={200}
-          pointsData={pointsData}
-          pointLat="lat"
-          pointLng="lng"
-          pointColor="markerColor"
-          pointAltitude={0.09}
-          pointRadius={0.75}
-          pointLabel={(d) => (d as CityEntry).name}
-          pointsMerge={false}
-          pointsTransitionDuration={0}
-          labelsData={pointsData}
-          labelLat="lat"
-          labelLng="lng"
-          labelAltitude={0.11}
-          labelText="name"
-          labelSize={1.25}
-          labelDotRadius={0}
-          labelColor="labelColor"
-          labelResolution={3}
-          labelIncludeDot={false}
-          labelsTransitionDuration={0}
+          htmlElementsData={stampedCities}
+          htmlLat="lat"
+          htmlLng="lng"
+          htmlAltitude={0.12}
+          htmlElement={buildCityChip}
+          htmlTransitionDuration={0}
           rendererConfig={{
             antialias: true,
             alpha: true,
