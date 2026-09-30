@@ -63,6 +63,8 @@ export const createGlobeCityChip = (
   root.style.whiteSpace = "nowrap";
   root.style.pointerEvents = "none";
   root.style.userSelect = "none";
+  // Sit the chip up and to the right of the city so the pin doesn't cover the spot.
+  root.style.transform = "translate(10px, -14px)";
   root.setAttribute("aria-label", city.name);
 
   const pin = document.createElement("span");
