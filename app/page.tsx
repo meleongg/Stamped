@@ -322,6 +322,11 @@ export default function Home() {
               />
             </div>
           </div>
+          <div className="mx-auto flex w-full max-w-4xl justify-center">
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <ShareDialog travelMapData={travelMapData} />
+            </div>
+          </div>
           <div className="mx-auto w-full max-w-4xl">
             <ReplayControls
               events={replayEvents}
@@ -331,11 +336,6 @@ export default function Home() {
               scrubIndex={replayScrubIndex}
               onScrubIndexChange={setReplayScrubIndex}
             />
-          </div>
-          <div className="mx-auto flex w-full max-w-4xl justify-center">
-            <div className="w-full max-w-xs sm:max-w-sm">
-              <ShareDialog travelMapData={travelMapData} />
-            </div>
           </div>
         </div>
       </div>
