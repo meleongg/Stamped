@@ -109,9 +109,12 @@ export const SharedMapActions: React.FC<SharedMapActionsProps> = ({
       </Button>
 
       <div className="border-border bg-card flex flex-col gap-2 rounded-lg border p-4 shadow-md">
-        <p className="text-muted-foreground text-xs font-medium">
-          Already using Stamped?
-        </p>
+        <div className="mb-1">
+          <p className="text-foreground text-sm font-medium">More with this map</p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Copy the link, compare side-by-side, or merge places into yours.
+          </p>
+        </div>
         <Button
           onClick={handleCopyLink}
           variant="outline"
