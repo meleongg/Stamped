@@ -1,10 +1,13 @@
 "use client";
 
 import { CountrySearch } from "@/app/components/CountrySearch";
+import { GlobeView } from "@/app/components/GlobeView";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
+import { MapViewToggle } from "@/app/components/MapViewToggle";
 import { Stats } from "@/app/components/Stats";
 import { SharedMapActions } from "@/app/m/[data]/SharedMapActions";
+import { useMapViewMode } from "@/app/hooks/useMapViewMode";
 import { CityCatalogEntry, TravelMapData, TravelStatus } from "@/app/types";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import { computeStats } from "@/app/utils/stats";
@@ -46,6 +49,9 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   });
   const mapRef = useRef<MapViewHandle>(null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const { mode: mapViewMode, setMode: setMapViewMode } = useMapViewMode();
+  const isGlobe = mapViewMode === "globe";
 
   const stats = useMemo(() => computeStats(sharedData), [sharedData]);
 
@@ -89,13 +95,19 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
   const handleSearchSelectCountry = (countryCode: string) => {
     if (!getCountryStatus(countryCode)) return;
     setSelectedCityId(null);
-    mapRef.current?.focusCountry(countryCode);
+    setSelectedCountry(countryCode);
+    if (!isGlobe) {
+      mapRef.current?.focusCountry(countryCode);
+    }
   };
 
   const handleSearchSelectCity = (city: CityCatalogEntry) => {
     if (!getCityStatus(city.id)) return;
+    setSelectedCountry(null);
     setSelectedCityId(city.id);
-    mapRef.current?.focusCity(city.id, city.lat, city.lng);
+    if (!isGlobe) {
+      mapRef.current?.focusCity(city.id, city.lat, city.lng);
+    }
   };
 
   const actionStack = (
@@ -118,26 +130,41 @@ export const SharedMapView: React.FC<SharedMapViewProps> = ({
 
       <div className="order-1 flex flex-col gap-3 lg:order-2 lg:col-span-3">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
-          <CountrySearch
-            countries={countries}
-            getCountryStatus={getCountryStatus}
-            getCityStatus={getCityStatus}
-            onSelectCountry={handleSearchSelectCountry}
-            onSelectCity={handleSearchSelectCity}
-            placeholder={`Search countries & cities in ${mapName}…`}
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <CountrySearch
+                countries={countries}
+                getCountryStatus={getCountryStatus}
+                getCityStatus={getCityStatus}
+                onSelectCountry={handleSearchSelectCountry}
+                onSelectCity={handleSearchSelectCity}
+                placeholder={`Search countries & cities in ${mapName}…`}
+              />
+            </div>
+            <MapViewToggle mode={mapViewMode} onModeChange={setMapViewMode} />
+          </div>
           <div className="border-border bg-card flex w-full items-center justify-center overflow-hidden rounded-lg border p-4 shadow-md">
             <div className="w-full">
-              <MapView
-                ref={mapRef}
-                getCountryStatus={getCountryStatus}
-                stampedCities={sharedCities}
-                selectedCityId={selectedCityId}
-                countries={countries}
-                isLoading={false}
-                readonly
-                showExport={false}
-              />
+              {isGlobe ? (
+                <GlobeView
+                  getCountryStatus={getCountryStatus}
+                  stampedCities={sharedCities}
+                  countries={countries}
+                  selectedCountry={selectedCountry}
+                  selectedCityId={selectedCityId}
+                />
+              ) : (
+                <MapView
+                  ref={mapRef}
+                  getCountryStatus={getCountryStatus}
+                  stampedCities={sharedCities}
+                  selectedCityId={selectedCityId}
+                  countries={countries}
+                  isLoading={false}
+                  readonly
+                  showExport={false}
+                />
+              )}
             </div>
           </div>
         </div>

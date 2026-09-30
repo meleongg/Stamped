@@ -77,6 +77,7 @@ export const MAP_DIMENSIONS = {
 export const STORAGE_KEYS = {
   USER_MAP_DATA: "userMapData",
   HOW_TO_USE_DISMISSED: "howToUseDismissed",
+  MAP_VIEW_MODE: "mapViewMode",
 } as const;
 
 // Import the TravelStatus type
