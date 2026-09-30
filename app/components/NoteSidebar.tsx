@@ -23,6 +23,11 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { ACTIVE_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../constants";
 import { CityEntry, CountryEntry, TravelStatus } from "../types";
 import { filterCityCatalogEntries, getCitiesByCountry } from "../utils/cities";
+import {
+  formatDateDisplay,
+  formatDateString,
+  parseDateString,
+} from "../utils/dates";
 
 const CITY_PICKER_RESULT_LIMIT = 50;
 
@@ -41,32 +46,6 @@ interface NoteSidebarProps {
   onStampCity?: (cityId: string) => void;
   onUnstampCity?: (cityId: string) => void;
 }
-
-// Parse a YYYY-MM-DD string into a local-time Date (no timezone surprises).
-const parseDateString = (value: string): Date | undefined => {
-  if (!value) return undefined;
-  const [y, m, d] = value.split("-").map(Number);
-  if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
-};
-
-// Format a Date back into a YYYY-MM-DD string in local time.
-const formatDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-const formatDateDisplay = (value: string): string => {
-  const date = parseDateString(value);
-  if (!date) return "";
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
 
 export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   countryCode,
@@ -124,6 +103,9 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const handleStatusChange = (newStatus: TravelStatus) => {
     if (newStatus === status) return;
     setStatus(newStatus);
+    if (newStatus !== "visited") {
+      setVisitedAt("");
+    }
     if (countryCode) {
       onUpdateCountry(countryCode, { status: newStatus });
     }

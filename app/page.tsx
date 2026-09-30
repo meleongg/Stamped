@@ -3,6 +3,7 @@
 import { CitySidebar } from "@/app/components/CitySidebar";
 import { CountrySearch } from "@/app/components/CountrySearch";
 import { useHowToUse } from "@/app/components/HowToUseProvider";
+import { Journal } from "@/app/components/Journal";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { NoteSidebar } from "@/app/components/NoteSidebar";
@@ -11,7 +12,12 @@ import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
 import { CityCatalogEntry, CityEntry } from "@/app/types";
 import { countryCodesMatch } from "@/app/utils/countryCodes";
+import { getCountryNameByCode } from "@/app/utils/countryNames";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
+import {
+  nextTravelStatus,
+  visitDateForToday,
+} from "@/app/utils/journal";
 import { computeStats } from "@/app/utils/stats";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +38,19 @@ const isSidebarInteraction = (target: Node): boolean => {
     document.getElementById("map-workspace")?.contains(target) ||
     target.closest('[data-slot="popover-content"]') !== null
   );
+};
+
+const promptMissingVisitDate = (
+  placeName: string,
+  onUseToday: () => void,
+): void => {
+  toast.message(`Add a visit date for ${placeName}?`, {
+    description: "Optional — builds your journal. Skip anytime.",
+    action: {
+      label: "Use today",
+      onClick: onUseToday,
+    },
+  });
 };
 
 export default function Home() {
@@ -118,7 +137,15 @@ export default function Home() {
 
   const handleCountryClick = (countryCode: string) => {
     if (selectedCountry === countryCode) {
+      const before = getCountryData(countryCode);
+      const next = nextTravelStatus(before?.status);
       cycleStatus(countryCode);
+      if (next === "visited" && !before?.visitedAt) {
+        const name = getCountryNameByCode(countryCode);
+        promptMissingVisitDate(name, () => {
+          updateCountry(countryCode, { visitedAt: visitDateForToday() });
+        });
+      }
     } else {
       setSelectedCountry(countryCode);
     }
@@ -133,6 +160,15 @@ export default function Home() {
     if (!isCityStamped(city.id)) {
       stampCity(city.id);
       toast.success(`Stamped · ${city.name}`);
+      // New stamps default toward visited when country is visited / unset.
+      const countryStatus = getCountryStatus(city.countryCode);
+      const willBeVisited =
+        countryStatus === "visited" || countryStatus === null;
+      if (willBeVisited) {
+        promptMissingVisitDate(city.name, () => {
+          updateCity(city.id, { visitedAt: visitDateForToday() });
+        });
+      }
     }
     setSelectedCityId(city.id);
     mapRef.current?.focusCity(city.id, city.lat, city.lng);
@@ -142,11 +178,44 @@ export default function Home() {
     const city = getCityData(cityId);
     if (!city) return;
     if (selectedCityId === cityId) {
+      const next = nextTravelStatus(city.status);
       cycleCity(cityId);
+      if (next === "visited" && !city.visitedAt) {
+        promptMissingVisitDate(city.name, () => {
+          updateCity(cityId, { visitedAt: visitDateForToday() });
+        });
+      }
     } else {
       setSelectedCityId(cityId);
     }
     mapRef.current?.focusCity(cityId, city.lat, city.lng);
+  };
+
+  const handleJournalFocusCountry = (countryCode: string) => {
+    setSelectedCityId(null);
+    setSelectedCountry(countryCode);
+    mapRef.current?.focusCountry(countryCode);
+  };
+
+  const handleJournalFocusCity = (cityId: string) => {
+    const city = getCityData(cityId);
+    if (!city) return;
+    setSelectedCountry(null);
+    setSelectedCityId(cityId);
+    mapRef.current?.focusCity(cityId, city.lat, city.lng);
+  };
+
+  const handleJournalSetVisitDate = (
+    target:
+      | { kind: "country"; countryCode: string }
+      | { kind: "city"; cityId: string },
+    visitedAt: string,
+  ) => {
+    if (target.kind === "city") {
+      updateCity(target.cityId, { visitedAt });
+      return;
+    }
+    updateCountry(target.countryCode, { visitedAt });
   };
 
   if (isLoading) {
@@ -183,6 +252,12 @@ export default function Home() {
         <div className="flex flex-col gap-6 lg:col-span-1">
           <Legend counts={getTotalCountsByStatus()} />
           <Stats stats={stats} />
+          <Journal
+            travelMapData={travelMapData}
+            onFocusCountry={handleJournalFocusCountry}
+            onFocusCity={handleJournalFocusCity}
+            onSetVisitDate={handleJournalSetVisitDate}
+          />
         </div>
         <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
           <CountrySearch
