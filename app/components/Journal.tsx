@@ -85,7 +85,7 @@ export const Journal: React.FC<JournalProps> = ({
           <div>
             <CardTitle className="text-lg">Journal</CardTitle>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              Visited places on this device only
+              Your visited places, newest first
             </p>
           </div>
           <span className="text-muted-foreground text-xs tabular-nums">

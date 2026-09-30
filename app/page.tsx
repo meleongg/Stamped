@@ -7,17 +7,26 @@ import { Journal } from "@/app/components/Journal";
 import { Legend } from "@/app/components/Legend";
 import { MapView, MapViewHandle } from "@/app/components/MapView";
 import { NoteSidebar } from "@/app/components/NoteSidebar";
+import { ReplayControls } from "@/app/components/ReplayControls";
 import { ShareDialog } from "@/app/components/ShareDialog";
 import { Stats } from "@/app/components/Stats";
 import { useMapData } from "@/app/hooks/useMapData";
-import { CityCatalogEntry, CityEntry } from "@/app/types";
+import { CityCatalogEntry, CityEntry, TravelStatus } from "@/app/types";
 import { countryCodesMatch } from "@/app/utils/countryCodes";
 import { getCountryNameByCode } from "@/app/utils/countryNames";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import {
+  buildJournalEntries,
+  filterUndatedJournalEntries,
   nextTravelStatus,
   visitDateForToday,
 } from "@/app/utils/journal";
+import {
+  buildReplayEvents,
+  citiesAsOfReplay,
+  countryStatusAsOfReplay,
+  revealedEventIds,
+} from "@/app/utils/replay";
 import { computeStats } from "@/app/utils/stats";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -82,14 +91,42 @@ export default function Home() {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const { openHelp, hasDismissedHelp } = useHowToUse();
   const autoOpenedHelpRef = useRef(false);
+  const [replayActive, setReplayActive] = useState(false);
+  const [replayScrubIndex, setReplayScrubIndex] = useState(-1);
 
   const stats = useMemo(() => computeStats(travelMapData), [travelMapData]);
+
+  const replayEvents = useMemo(
+    () => buildReplayEvents(travelMapData),
+    [travelMapData],
+  );
+  const undatedVisitCount = useMemo(
+    () => filterUndatedJournalEntries(buildJournalEntries(travelMapData)).length,
+    [travelMapData],
+  );
+  const revealedIds = useMemo(
+    () => revealedEventIds(replayEvents, replayScrubIndex),
+    [replayEvents, replayScrubIndex],
+  );
+
+  const getDisplayCountryStatus = (countryCode: string): TravelStatus | null =>
+    countryStatusAsOfReplay(
+      travelMapData,
+      countryCode,
+      revealedIds,
+      replayActive,
+    );
 
   const selectedStatus = selectedCountry
     ? getCountryStatus(selectedCountry)
     : null;
 
   const stampedCities = getStampedCities();
+
+  const displayStampedCities = useMemo(
+    () => citiesAsOfReplay(stampedCities, revealedIds, replayActive),
+    [stampedCities, revealedIds, replayActive],
+  );
 
   const stampedCitiesInCountry = useMemo(() => {
     if (!selectedCountry) return [];
@@ -271,16 +308,17 @@ export default function Home() {
             <div className="w-full">
               <MapView
                 ref={mapRef}
-                getCountryStatus={getCountryStatus}
+                getCountryStatus={getDisplayCountryStatus}
                 onCountryClick={handleCountryClick}
                 selectedCountry={selectedCountry}
                 hoveredCountry={hoveredCountry}
                 onCountryHover={setHoveredCountry}
-                stampedCities={stampedCities}
+                stampedCities={displayStampedCities}
                 selectedCityId={selectedCityId}
                 onCityClick={handleCityClick}
                 countries={countries}
                 isLoading={false}
+                readonly={replayActive}
               />
             </div>
           </div>
@@ -288,6 +326,16 @@ export default function Home() {
             <div className="w-full max-w-xs sm:max-w-sm">
               <ShareDialog travelMapData={travelMapData} />
             </div>
+          </div>
+          <div className="mx-auto w-full max-w-4xl">
+            <ReplayControls
+              events={replayEvents}
+              undatedCount={undatedVisitCount}
+              active={replayActive}
+              onActiveChange={setReplayActive}
+              scrubIndex={replayScrubIndex}
+              onScrubIndexChange={setReplayScrubIndex}
+            />
           </div>
         </div>
       </div>
