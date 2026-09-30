@@ -20,6 +20,7 @@ interface JournalProps {
     target: { kind: "country"; countryCode: string } | { kind: "city"; cityId: string },
     visitedAt: string,
   ) => void;
+  readonly?: boolean;
 }
 
 export const Journal: React.FC<JournalProps> = ({
@@ -27,6 +28,7 @@ export const Journal: React.FC<JournalProps> = ({
   onFocusCountry,
   onFocusCity,
   onSetVisitDate,
+  readonly = false,
 }) => {
   const [undatedOnly, setUndatedOnly] = useState(false);
 
@@ -53,6 +55,7 @@ export const Journal: React.FC<JournalProps> = ({
   };
 
   const handleSetToday = (entry: JournalEntry) => {
+    if (readonly) return;
     const today = visitDateForToday();
     if (entry.kind === "city" && entry.cityId) {
       onSetVisitDate({ kind: "city", cityId: entry.cityId }, today);
@@ -65,6 +68,7 @@ export const Journal: React.FC<JournalProps> = ({
   };
 
   const handleSetAllUndatedToday = () => {
+    if (readonly) return;
     const today = visitDateForToday();
     for (const entry of undated) {
       if (entry.kind === "city" && entry.cityId) {
@@ -105,7 +109,7 @@ export const Journal: React.FC<JournalProps> = ({
             {undatedOnly ? "Showing undated" : "Undated only"}
             {undated.length > 0 ? ` (${undated.length})` : ""}
           </Button>
-          {undated.length > 0 && (
+          {undated.length > 0 && !readonly && (
             <Button
               type="button"
               size="sm"
@@ -117,6 +121,12 @@ export const Journal: React.FC<JournalProps> = ({
             </Button>
           )}
         </div>
+
+        {readonly && (
+          <p className="text-muted-foreground text-xs">
+            Date edits are paused while Replay is active.
+          </p>
+        )}
 
         <ul className="max-h-72 space-y-1 overflow-y-auto pr-1">
           {entries.length === 0 ? (
@@ -140,7 +150,7 @@ export const Journal: React.FC<JournalProps> = ({
                       {formatJournalDateLabel(entry)}
                     </div>
                   </button>
-                  {!entry.visitedAt && (
+                  {!entry.visitedAt && !readonly && (
                     <Button
                       type="button"
                       size="sm"

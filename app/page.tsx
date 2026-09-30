@@ -17,6 +17,7 @@ import { useMapViewMode } from "@/app/hooks/useMapViewMode";
 import { CityCatalogEntry, CityEntry, TravelStatus } from "@/app/types";
 import { countryCodesMatch } from "@/app/utils/countryCodes";
 import { getCountryNameByCode } from "@/app/utils/countryNames";
+import { getCityById } from "@/app/utils/cities";
 import { CountryFeature, loadCountries } from "@/app/utils/geo";
 import {
   buildJournalEntries,
@@ -48,9 +49,12 @@ const isSidebarInteraction = (target: Node): boolean => {
     document.getElementById("note-sidebar")?.contains(target) ||
     document.getElementById("city-sidebar")?.contains(target) ||
     document.getElementById("map-workspace")?.contains(target) ||
+    document.getElementById("map-sidebar-rail")?.contains(target) ||
     target.closest('[data-slot="popover-content"]') !== null
   );
 };
+
+const VISIT_DATE_TOAST_MS = 8000;
 
 const promptMissingVisitDate = (
   placeName: string,
@@ -60,15 +64,54 @@ const promptMissingVisitDate = (
   const title = options?.stamped
     ? `Stamped · ${placeName}`
     : `Add a visit date for ${placeName}?`;
-  toast.success(title, {
-    description: options?.stamped
-      ? "Add a visit date? Optional — builds your journal."
-      : "Optional — builds your journal. Skip anytime.",
-    action: {
-      label: "Use today",
-      onClick: onUseToday,
-    },
+  const description = options?.stamped
+    ? "Add a visit date? Optional — builds your journal."
+    : "Optional — builds your journal. Skip anytime.";
+  const action = {
+    label: "Use today",
+    onClick: onUseToday,
+  };
+  if (options?.stamped) {
+    toast.success(title, {
+      description,
+      action,
+      duration: VISIT_DATE_TOAST_MS,
+    });
+    return;
+  }
+  toast.message(title, {
+    description,
+    action,
+    duration: VISIT_DATE_TOAST_MS,
   });
+};
+
+const stampCityWithFeedback = (
+  city: { id: string; name: string; countryCode: string },
+  deps: {
+    stampCity: (id: string) => void;
+    getCountryStatus: (code: string) => TravelStatus | null;
+    updateCity: (
+      id: string,
+      updates: Partial<Pick<CityEntry, "visitedAt">>,
+    ) => void;
+  },
+): void => {
+  deps.stampCity(city.id);
+  const countryStatus = deps.getCountryStatus(city.countryCode);
+  const willBeVisited =
+    countryStatus === "visited" || countryStatus === null;
+  if (willBeVisited) {
+    promptMissingVisitDate(
+      city.name,
+      () => {
+        deps.updateCity(city.id, { visitedAt: visitDateForToday() });
+      },
+      { stamped: true },
+    );
+    return;
+  }
+  toast.success(`Stamped · ${city.name}`);
 };
 
 export default function Home() {
@@ -128,10 +171,6 @@ export default function Home() {
       replayActive,
     );
 
-  const selectedStatus = selectedCountry
-    ? getCountryStatus(selectedCountry)
-    : null;
-
   const stampedCities = getStampedCities();
 
   const displayStampedCities = useMemo(
@@ -184,6 +223,7 @@ export default function Home() {
   }, [isLoading, travelMapData, hasDismissedHelp, openHelp]);
 
   const handleCountryClick = (countryCode: string) => {
+    if (replayActive) return;
     if (selectedCountry === countryCode) {
       const before = getCountryData(countryCode);
       const next = nextTravelStatus(before?.status);
@@ -207,24 +247,13 @@ export default function Home() {
   };
 
   const handleSearchSelectCity = (city: CityCatalogEntry) => {
+    if (replayActive) return;
     if (!isCityStamped(city.id)) {
-      stampCity(city.id);
-      // New stamps default toward visited when country is visited / unset.
-      const countryStatus = getCountryStatus(city.countryCode);
-      const willBeVisited =
-        countryStatus === "visited" || countryStatus === null;
-      if (willBeVisited) {
-        // One toast: stamp confirmation + optional visit-date action.
-        promptMissingVisitDate(
-          city.name,
-          () => {
-            updateCity(city.id, { visitedAt: visitDateForToday() });
-          },
-          { stamped: true },
-        );
-      } else {
-        toast.success(`Stamped · ${city.name}`);
-      }
+      stampCityWithFeedback(city, {
+        stampCity,
+        getCountryStatus,
+        updateCity,
+      });
     }
     setSelectedCityId(city.id);
     if (!isGlobe) {
@@ -233,6 +262,7 @@ export default function Home() {
   };
 
   const handleCityClick = (cityId: string) => {
+    if (replayActive) return;
     const city = getCityData(cityId);
     if (!city) return;
     if (selectedCityId === cityId) {
@@ -273,6 +303,7 @@ export default function Home() {
       | { kind: "city"; cityId: string },
     visitedAt: string,
   ) => {
+    if (replayActive) return;
     if (target.kind === "city") {
       updateCity(target.cityId, { visitedAt });
       return;
@@ -295,23 +326,23 @@ export default function Home() {
         ?.properties.name || selectedCountry.toUpperCase()
     : null;
 
+  // Key only on selection identity — including status remounts and drops draft notes.
   const sidebarKey = selectedCountry
-    ? `country-${selectedCountry}-${selectedStatus ?? "new"}`
+    ? `country-${selectedCountry}`
     : "country-closed";
 
-  const selectedCityStatus = selectedCityId
-    ? getCityData(selectedCityId)?.status
-    : null;
-
   const citySidebarKey = selectedCityId
-    ? `city-${selectedCityId}-${selectedCityStatus ?? "new"}`
+    ? `city-${selectedCityId}`
     : "city-closed";
   const selectedCityData = selectedCityId ? getCityData(selectedCityId) : null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-4">
-        <div className="flex flex-col gap-6 lg:col-span-1">
+        <div
+          id="map-sidebar-rail"
+          className="flex flex-col gap-6 lg:col-span-1"
+        >
           <Legend counts={getTotalCountsByStatus()} />
           <Stats stats={stats} />
           <Journal
@@ -319,6 +350,7 @@ export default function Home() {
             onFocusCountry={handleJournalFocusCountry}
             onFocusCity={handleJournalFocusCity}
             onSetVisitDate={handleJournalSetVisitDate}
+            readonly={replayActive}
           />
         </div>
         <div id="map-workspace" className="flex flex-col gap-3 lg:col-span-3">
@@ -330,6 +362,7 @@ export default function Home() {
                 getCityStatus={(id) => getCityData(id)?.status ?? null}
                 onSelectCountry={handleSearchSelectCountry}
                 onSelectCity={handleSearchSelectCity}
+                disabled={replayActive}
               />
             </div>
             <MapViewToggle mode={mapViewMode} onModeChange={setMapViewMode} />
@@ -390,10 +423,23 @@ export default function Home() {
         isOpen={!!selectedCountry}
         stampedCities={stampedCitiesInCountry}
         onStampCity={(id) => {
-          stampCity(id);
-          toast.success("City stamped");
+          if (replayActive || !selectedCountry) return;
+          const catalog = getCityById(id);
+          stampCityWithFeedback(
+            {
+              id,
+              name: catalog?.name ?? id,
+              countryCode: catalog?.countryCode ?? selectedCountry,
+            },
+            {
+              stampCity,
+              getCountryStatus,
+              updateCity,
+            },
+          );
         }}
         onUnstampCity={unstampCity}
+        readonly={replayActive}
       />
       <CitySidebar
         key={citySidebarKey}
@@ -403,6 +449,7 @@ export default function Home() {
         onUnstampCity={unstampCity}
         onClose={() => setSelectedCityId(null)}
         isOpen={!!selectedCityId && !!selectedCityData}
+        readonly={replayActive}
       />
     </div>
   );

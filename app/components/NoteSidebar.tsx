@@ -45,6 +45,8 @@ interface NoteSidebarProps {
   stampedCities?: CityEntry[];
   onStampCity?: (cityId: string) => void;
   onUnstampCity?: (cityId: string) => void;
+  /** When true, block status/date/notes/city edits (e.g. during replay). */
+  readonly?: boolean;
 }
 
 export const NoteSidebar: React.FC<NoteSidebarProps> = ({
@@ -58,10 +60,9 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   stampedCities = [],
   onStampCity,
   onUnstampCity,
+  readonly = false,
 }) => {
-  // Parent passes key={selectedCountry}, so this component is remounted on
-  // each country change. That means lazy state initializers correctly seed
-  // from `countryData` once per selection with no prop->state effect.
+  // Parent keys by country code only so status changes do not remount and drop drafts.
   const [notes, setNotes] = useState<string>(() => countryData?.notes ?? "");
   const [visitedAt, setVisitedAt] = useState<string>(
     () => countryData?.visitedAt ?? "",
@@ -76,7 +77,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   const debouncedCitySearch = useDebouncedValue(citySearchQuery, 200);
 
   const handleSave = () => {
-    if (!countryCode) return;
+    if (!countryCode || readonly) return;
 
     const effectiveStatus = status ?? countryData?.status;
     if (!effectiveStatus) {
@@ -93,7 +94,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   };
 
   const handleRemove = () => {
-    if (!countryCode) return;
+    if (!countryCode || readonly) return;
     onRemoveCountry(countryCode);
     toast.success(
       `Cleared status · ${countryName || countryCode.toUpperCase()}`,
@@ -101,17 +102,24 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   };
 
   const handleStatusChange = (newStatus: TravelStatus) => {
-    if (newStatus === status) return;
+    if (readonly || newStatus === status) return;
     setStatus(newStatus);
+    const nextVisitedAt = newStatus === "visited" ? visitedAt : "";
     if (newStatus !== "visited") {
       setVisitedAt("");
     }
     if (countryCode) {
-      onUpdateCountry(countryCode, { status: newStatus });
+      // Flush draft notes with the status write so a remount cannot lose them.
+      onUpdateCountry(countryCode, {
+        status: newStatus,
+        notes: notes.trim() || undefined,
+        visitedAt: nextVisitedAt || undefined,
+      });
     }
   };
 
   const handleDateSelect = (next: Date | undefined) => {
+    if (readonly) return;
     const formatted = next ? formatDateString(next) : "";
     setVisitedAt(formatted);
     setDateOpen(false);
@@ -143,6 +151,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
   };
 
   const handlePickCity = (cityId: string) => {
+    if (readonly) return;
     onStampCity?.(cityId);
     setCityPickerOpen(false);
     setCitySearchQuery("");
@@ -177,6 +186,12 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
           </button>
         </div>
 
+        {readonly && (
+          <p className="text-muted-foreground mb-4 text-xs">
+            Editing is paused while Replay is active.
+          </p>
+        )}
+
         {/* Status Selection - single column, full width */}
         <div className="mb-6">
           <Label className="mb-3">Travel Status</Label>
@@ -195,7 +210,12 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                   key={statusValue}
                   type="button"
                   onClick={() => handleStatusChange(statusValue)}
-                  className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                  disabled={readonly}
+                  className={`group relative flex h-11 w-full items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                    readonly
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer"
+                  } ${
                     isSelected
                       ? "bg-accent text-accent-foreground"
                       : "border-border text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground"
@@ -225,6 +245,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  disabled={readonly}
                   className={`h-10 w-full cursor-pointer justify-start text-left font-normal ${
                     visitedAt ? "" : "text-muted-foreground"
                   }`}
@@ -284,9 +305,12 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
             onBlur={handleSave}
             placeholder="Add your thoughts, memories, or plans..."
             className="h-32 resize-none"
+            disabled={readonly}
           />
           <p className="text-muted-foreground mt-1.5 text-xs">
-            Auto-saves when you click away.
+            {readonly
+              ? "Editing is paused while Replay is active."
+              : "Auto-saves when you click away."}
           </p>
         </div>
 
@@ -311,7 +335,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                         {city.name}
                       </span>
                     </span>
-                    {onUnstampCity && (
+                    {onUnstampCity && !readonly && (
                       <button
                         type="button"
                         onClick={() => onUnstampCity(city.cityId)}
@@ -324,7 +348,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
                 ))}
               </ul>
             )}
-            {unstampedCatalog.length > 0 && onStampCity && (
+            {unstampedCatalog.length > 0 && onStampCity && !readonly && (
               <Popover
                 open={cityPickerOpen}
                 onOpenChange={handleCityPickerOpenChange}
@@ -406,6 +430,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
             onClick={handleSave}
             className="w-full cursor-pointer"
             variant="default"
+            disabled={readonly}
           >
             Save Changes
           </Button>
@@ -415,6 +440,7 @@ export const NoteSidebar: React.FC<NoteSidebarProps> = ({
               onClick={handleRemove}
               className="w-full cursor-pointer"
               variant="destructive"
+              disabled={readonly}
             >
               Clear marked status
             </Button>

@@ -31,6 +31,8 @@ interface CitySidebarProps {
   onUnstampCity: (cityId: string) => void;
   onClose: () => void;
   isOpen: boolean;
+  /** When true, block status/date/notes edits (e.g. during replay). */
+  readonly?: boolean;
 }
 
 export const CitySidebar: React.FC<CitySidebarProps> = ({
@@ -40,6 +42,7 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
   onUnstampCity,
   onClose,
   isOpen,
+  readonly = false,
 }) => {
   const [notes, setNotes] = useState<string>(() => cityData?.notes ?? "");
   const [visitedAt, setVisitedAt] = useState<string>(
@@ -59,6 +62,7 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
   const countryName = getCountryNameForCity(cityData);
 
   const handleSave = () => {
+    if (readonly) return;
     onUpdateCity(cityId, {
       status,
       notes: notes.trim() || undefined,
@@ -68,23 +72,28 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
   };
 
   const handleUnstamp = () => {
+    if (readonly) return;
     onUnstampCity(cityId);
     toast.success(`Removed stamp · ${cityData.name}`);
   };
 
   const handleStatusChange = (newStatus: TravelStatus) => {
-    if (newStatus === status) return;
+    if (readonly || newStatus === status) return;
     setStatus(newStatus);
+    const nextVisitedAt =
+      newStatus === "visited" ? visitedAt || undefined : undefined;
     if (newStatus !== "visited") {
       setVisitedAt("");
     }
     onUpdateCity(cityId, {
       status: newStatus,
-      visitedAt: newStatus === "visited" ? visitedAt || undefined : undefined,
+      notes: notes.trim() || undefined,
+      visitedAt: nextVisitedAt,
     });
   };
 
   const handleDateSelect = (next: Date | undefined) => {
+    if (readonly) return;
     const formatted = next ? formatDateString(next) : "";
     setVisitedAt(formatted);
     setDateOpen(false);
@@ -118,6 +127,12 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
           </button>
         </div>
 
+        {readonly && (
+          <p className="text-muted-foreground mb-4 text-xs">
+            Editing is paused while Replay is active.
+          </p>
+        )}
+
         <div className="mb-6">
           <Label className="mb-3">Travel Status</Label>
           <div className="flex flex-col gap-2">
@@ -130,7 +145,12 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
                   key={statusValue}
                   type="button"
                   onClick={() => handleStatusChange(statusValue)}
-                  className={`group relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                  disabled={readonly}
+                  className={`group relative flex h-11 w-full items-center gap-3 rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                    readonly
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer"
+                  } ${
                     isSelected
                       ? "bg-accent text-accent-foreground"
                       : "border-border text-muted-foreground hover:border-border hover:bg-accent/50 hover:text-foreground"
@@ -159,6 +179,7 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  disabled={readonly}
                   className={`h-10 w-full cursor-pointer justify-start text-left font-normal ${
                     visitedAt ? "" : "text-muted-foreground"
                   }`}
@@ -167,6 +188,28 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
                   <span className="flex-1 truncate">
                     {visitedAt ? formatDateDisplay(visitedAt) : "Pick a date"}
                   </span>
+                  {visitedAt && !readonly && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Clear date"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleDateSelect(undefined);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleDateSelect(undefined);
+                        }
+                      }}
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground ml-2 inline-flex items-center justify-center rounded-sm p-0.5"
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -195,20 +238,28 @@ export const CitySidebar: React.FC<CitySidebarProps> = ({
             onBlur={handleSave}
             placeholder="Memories, highlights, tips..."
             className="h-32 resize-none"
+            disabled={readonly}
           />
           <p className="text-muted-foreground mt-1.5 text-xs">
-            Auto-saves when you click away.
+            {readonly
+              ? "Editing is paused while Replay is active."
+              : "Auto-saves when you click away."}
           </p>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Button onClick={handleSave} className="w-full cursor-pointer">
+          <Button
+            onClick={handleSave}
+            className="w-full cursor-pointer"
+            disabled={readonly}
+          >
             Save Changes
           </Button>
           <Button
             onClick={handleUnstamp}
             className="w-full cursor-pointer"
             variant="destructive"
+            disabled={readonly}
           >
             Remove stamp
           </Button>
