@@ -87,7 +87,7 @@ describe("replay timeline", () => {
 
   it("formats cursor labels and speed intervals", () => {
     const events = buildReplayEvents(sampleMap());
-    expect(formatReplayCursorLabel(events, -1)).toBe("Start");
+    expect(formatReplayCursorLabel(events, -1)).toBe("Beginning");
     expect(formatReplayCursorLabel(events, 0)).toMatch(/2023|May/);
     expect(replayIntervalForSpeed(2)).toBeLessThan(replayIntervalForSpeed(1));
   });

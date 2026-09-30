@@ -57,11 +57,11 @@ export const formatReplayCursorLabel = (
   events: ReplayEvent[],
   scrubIndex: number,
 ): string => {
-  if (events.length === 0) return "No dated visits yet";
-  if (scrubIndex < 0) return "Start";
+  if (events.length === 0) return "Add visit dates to get started";
+  if (scrubIndex < 0) return "Beginning";
   const event = events[Math.min(scrubIndex, events.length - 1)];
   const source =
-    event.dateSource === "stamped" ? " · stamped date" : "";
+    event.dateSource === "stamped" ? " · logged on this day" : "";
   return `${formatDateDisplay(event.date)}${source}`;
 };
 

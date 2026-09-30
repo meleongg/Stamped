@@ -87,7 +87,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
         <div>
           <p className="text-foreground text-sm font-semibold">Replay</p>
           <p className="text-muted-foreground text-xs">
-            Author-only trip arc on this device
+            Watch your travels appear in the order you visited them
           </p>
         </div>
         <Button
@@ -97,15 +97,15 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
           className="cursor-pointer"
           onClick={handleToggleActive}
         >
-          {active ? "Exit replay" : "Enter replay"}
+          {active ? "Done" : "Start"}
         </Button>
       </div>
 
       {!hasEvents ? (
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Add visit dates in Journal to build a timeline.
+          Add visit dates in Journal first, then you can replay your map here.
           {undatedCount > 0
-            ? ` ${undatedCount} visited ${undatedCount === 1 ? "place has" : "places have"} no date yet.`
+            ? ` ${undatedCount} visited ${undatedCount === 1 ? "place still needs" : "places still need"} a date.`
             : ""}
         </p>
       ) : (
@@ -162,7 +162,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
               onClick={handleReset}
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Reset
+              Start over
             </Button>
             <div className="ml-auto flex items-center gap-1">
               {SPEEDS.map((value) => (
@@ -183,9 +183,10 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
           {active && undatedCount > 0 && (
             <p className="text-muted-foreground text-xs leading-relaxed">
-              {undatedCount} undated visited{" "}
-              {undatedCount === 1 ? "place is" : "places are"} hidden until you
-              set a date in Journal.
+              {undatedCount} visited{" "}
+              {undatedCount === 1 ? "place is" : "places are"} missing a date, so{" "}
+              {undatedCount === 1 ? "it stays" : "they stay"} off the replay until
+              you add one in Journal.
             </p>
           )}
         </>
